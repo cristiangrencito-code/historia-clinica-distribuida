@@ -1,0 +1,51 @@
+============================================================
+ EVIDENCIA RF6 - LAS CUATRO VISTAS POR ROL
+ Generado: 2026-11-08 13:56
+============================================================
+======================================================================
+ PORTAL CLINICO - LAS CUATRO VISTAS POR ROL  (RF6)
+======================================================================
+
+--- Inicio de sesion de los cuatro roles ---
+
+  maria       HTTP 200  rol=paciente      doc=1098765432
+  admision1   HTTP 200  rol=admisionista  doc=None
+  drcarlos    HTTP 200  rol=medico        doc=None
+  auditor1    HTTP 200  rol=auditor       doc=None
+
+--- HISTORIA CLINICA de Maria (1098765432) con cada rol ---
+
+  maria       HTTP 200  PERMITIDO  atenciones=3 sedes=3 diagnosticos=3 medicamentos=2
+  admision1   HTTP 200  PERMITIDO  atenciones=3 sedes=3 diagnosticos=0 medicamentos=0
+                          filtrado -> vista administrativa: sin diagnosticos, medicamentos ni alergias
+  drcarlos    HTTP 200  PERMITIDO  atenciones=3 sedes=3 diagnosticos=3 medicamentos=2
+  auditor1    HTTP 403  DENEGADO: el rol auditor no puede VER_HC_COMPLETA
+
+--- PERTENENCIA: Maria pide la historia de OTRO paciente ---
+
+  maria -> doc 1033445566   HTTP 403  solo puede consultar su propia historia
+  drcarlos -> doc 1033445566 HTTP 200  PERMITIDO
+
+--- BUSQUEDA ---
+
+  admision1   HTTP 200  1 resultado(s)
+  drcarlos    HTTP 200  1 resultado(s)
+  maria       HTTP 403  DENEGADO: el rol paciente no puede BUSCAR_PACIENTE
+
+--- TABLERO DE COBERTURA ---
+
+  drcarlos    HTTP 200  global 42.86%
+  auditor1    HTTP 200  global 42.86%
+  admision1   HTTP 403  DENEGADO
+  maria       HTTP 403  DENEGADO
+
+  por sede:
+    IPS CARTAGENA    pacientes=4 atenciones=4 fhir=3  75.0%
+    IPS COROZAL      pacientes=3 atenciones=3 fhir=2  66.67%
+    IPS SINCELEJO    pacientes=4 atenciones=4 fhir=2  50.0%
+  por nodo:
+    nodo1   pacientes=3 fhir=1  33.33%
+    nodo2   pacientes=2 fhir=1  50.0%
+    nodo3   pacientes=2 fhir=1  50.0%
+  nodos: nodo1=UP, nodo2=UP, nodo3=UP
+

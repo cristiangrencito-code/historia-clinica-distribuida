@@ -1,0 +1,99 @@
+============================================================
+ EVIDENCIA RNF - DEGRADACION PARCIAL Y RECUPERACION
+ Generado: 2026-11-08 13:56
+
+ El enunciado pide: 'si una sede se cae, el resto sigue
+ operando y la vista unificada lo indica'.
+============================================================
+
+================================================================
+ 1. LAS TRES SEDES EN PIE
+================================================================
+
+  /health  HTTP 200  estado=ok  nodos=3 de 3
+      nodo1    up
+      nodo2    up
+      nodo3    up
+      hsb      ok
+
+  Reporte de cobertura  HTTP 200   SIGUE FUNCIONANDO
+      global: 42.86%  (7 pacientes visibles)
+      completo: True
+      nodo1   UP
+      nodo2   UP
+      nodo3   UP
+
+  Historia de Maria  HTTP 200   SIGUE FUNCIONANDO
+      3 atenciones en 3 sede(s), completo=True
+
+
+>>> apagando pg_nodo3 (sede Corozal)...
+
+================================================================
+ 2. CON UNA SEDE CAIDA - DEGRADACION PARCIAL
+================================================================
+
+  /health  HTTP 503  estado=degradado  nodos=2 de 3
+      nodo1    up
+      nodo2    up
+      nodo3    down
+      hsb      degradado
+
+  Reporte de cobertura  HTTP 200   SIGUE FUNCIONANDO
+      global: 40.0%  (5 pacientes visibles)
+      completo: False
+      nodo1   UP
+      nodo2   UP
+      nodo3   DOWN
+
+  Historia de Maria  HTTP 200   SIGUE FUNCIONANDO
+      3 atenciones en 3 sede(s), completo=False
+      aviso: Resultado PARCIAL: no respondieron nodo3. Puede faltar informacion.
+
+
+>>> apagando tambien pg_nodo2...
+
+================================================================
+ 3. CON DOS SEDES CAIDAS - SIGUE SIRVIENDO LA QUE QUEDA
+================================================================
+
+  /health  HTTP 503  estado=degradado  nodos=1 de 3
+      nodo1    up
+      nodo2    down
+      nodo3    down
+      hsb      degradado
+
+  Reporte de cobertura  HTTP 200   SIGUE FUNCIONANDO
+      global: 33.33%  (3 pacientes visibles)
+      completo: False
+      nodo1   UP
+      nodo2   DOWN
+      nodo3   DOWN
+
+  Historia de Maria  HTTP 200   SIGUE FUNCIONANDO
+      3 atenciones en 3 sede(s), completo=False
+      aviso: Resultado PARCIAL: no respondieron nodo2, nodo3. Puede faltar informacion.
+
+
+>>> levantando las dos sedes otra vez...
+
+================================================================
+ 4. RECUPERACION AUTOMATICA, SIN REINICIAR NADA
+================================================================
+
+  /health  HTTP 200  estado=ok  nodos=3 de 3
+      nodo1    up
+      nodo2    up
+      nodo3    up
+      hsb      ok
+
+  Reporte de cobertura  HTTP 200   SIGUE FUNCIONANDO
+      global: 42.86%  (7 pacientes visibles)
+      completo: True
+      nodo1   UP
+      nodo2   UP
+      nodo3   UP
+
+  Historia de Maria  HTTP 200   SIGUE FUNCIONANDO
+      3 atenciones en 3 sede(s), completo=True
+

@@ -1,0 +1,61 @@
+======================================================================
+ EVIDENCIA FASE 3 - HSB: REINTENTOS, DLQ E IDEMPOTENCIA
+ Generado: 2026-11-08 12:44
+======================================================================
+
+--- 1. SECUENCIA DE REINTENTO CON RETROCESO EXPONENCIAL ---
+    (HAPI apagado; el mensaje NO se pierde, se encola)
+
+[reintentos] trabajador iniciado
+  -> FALLIDO, reintento 2 en 2s
+[reintentos] intento 2 de 61eb1a6de2fb
+  -> FALLIDO, reintento 3 en 4s
+[reintentos] intento 3 de 61eb1a6de2fb
+  -> FALLIDO, reintento 4 en 8s
+[reintentos] intento 4 de 61eb1a6de2fb
+  -> FALLIDO, reintento 5 en 16s
+[reintentos] intento 5 de 61eb1a6de2fb
+  -> ENTREGADO
+  -> ENTREGADO
+
+--- 2. ESTADO FINAL DE LA COLA ---
+    hash    |     sede      | formato |  estado   | intentos 
+------------+---------------+---------+-----------+----------
+ 9101b66be2 | IPS SINCELEJO | HL7     | ENTREGADO |        0
+ f7a7b02846 | IPS CARTAGENA | CSV     | ENTREGADO |        0
+ 3714194acf | IPS COROZAL   | JSON    | ENTREGADO |        0
+ a125495deb | IPS SINCELEJO | HL7     | RECHAZADO |        0
+ 6f3cca6665 | IPS SINCELEJO | HL7     | MUERTO    |        5
+ 8ea368fd6b | IPS CARTAGENA | HL7     | ENTREGADO |        0
+ 61eb1a6de2 | IPS COROZAL   | HL7     | ENTREGADO |        4
+(7 rows)
+
+
+--- 3. METRICAS DEL BUS ---
+hsb_mensajes_total 7
+hsb_mensajes_entregados 5
+hsb_mensajes_rechazados 1
+hsb_mensajes_muertos 1
+hsb_mensajes_en_reintento 0
+hsb_mensajes_con_reintentos 2
+hsb_latencia_media_ms 41341.82
+hsb_porcentaje_fallidos 28.57
+hsb_mensajes_por_minuto 0
+
+--- 4. RECURSOS EN HAPI FHIR ---
+    Patient      3
+    Encounter    5
+    Condition    5
+    Observation  3
+
+--- 5. CADENA DE AUDITORIA ---
+ secuencia |  accion  | resultado | documento_id |   prev   |  actual  
+-----------+----------+-----------+--------------+----------+----------
+         1 | INGESTAR | PERMITIDO |   1098765432 | GENESIS  | 34fbfd87
+         2 | INGESTAR | PERMITIDO |   1098765432 | 34fbfd87 | 001c8550
+         3 | INGESTAR | PERMITIDO |   1098765432 | 001c8550 | 84b53f2b
+         4 | INGESTAR | RECHAZADO |   1098765432 | 84b53f2b | 536e7154
+         5 | INGESTAR | PERMITIDO |   1077889900 | 536e7154 | ddfbfd03
+         6 | INGESTAR | PERMITIDO |   1055667788 | ddfbfd03 | 2b10546b
+(6 rows)
+

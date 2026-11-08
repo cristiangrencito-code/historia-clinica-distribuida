@@ -1,0 +1,26 @@
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Custom Scan (Citus Adaptive)
+   Task Count: 1
+   Tasks Shown: All
+   ->  Task
+         Node: host=citus-worker2 port=5432 dbname=fhirdist
+         ->  Nested Loop
+               ->  Index Only Scan using patient_pkey_102017 on patient_102017 p
+                     Index Cond: (patient_id = '1098765432'::text)
+               ->  Index Scan using condition_pkey_102113 on condition_102113 c
+                     Index Cond: ((patient_id)::text = '1098765432'::text)
+(10 rows)
+
+                            QUERY PLAN                            
+------------------------------------------------------------------
+ Aggregate
+   ->  Custom Scan (Citus Adaptive)
+         Task Count: 32
+         Tasks Shown: One of 32
+         ->  Task
+               Node: host=citus-worker1 port=5432 dbname=fhirdist
+               ->  Aggregate
+                     ->  Seq Scan on patient_102008 patient
+(8 rows)
+

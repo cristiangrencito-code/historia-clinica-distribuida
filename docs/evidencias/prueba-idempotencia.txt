@@ -1,0 +1,15 @@
+PRUEBA DE IDEMPOTENCIA - 2026-11-08 10:53
+======================================================
+Se envia DOS VECES el mismo Bundle (docs/evidencias/bundle-maria.json).
+
+1er envio  -> Patient: 201 Created
+2do envio  -> Patient: 200 OK     (ifNoneExist lo encontro, no duplico)
+
+Pacientes en HAPI tras los dos envios:
+"total": 1
+
+Recursos creados por tipo:
+  Patient -> "total": 1
+  Encounter -> "total": 2
+  Condition -> "total": 2
+  Observation -> "total": 2

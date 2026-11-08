@@ -1,0 +1,11 @@
+[reintentos] trabajador iniciado
+  -> FALLIDO, reintento 2 en 2s
+[reintentos] intento 2 de 61eb1a6de2fb
+  -> FALLIDO, reintento 3 en 4s
+[reintentos] intento 3 de 61eb1a6de2fb
+  -> FALLIDO, reintento 4 en 8s
+[reintentos] intento 4 de 61eb1a6de2fb
+  -> FALLIDO, reintento 5 en 16s
+[reintentos] intento 5 de 61eb1a6de2fb
+  -> ENTREGADO
+  -> ENTREGADO

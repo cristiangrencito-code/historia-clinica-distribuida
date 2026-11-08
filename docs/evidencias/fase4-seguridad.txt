@@ -1,0 +1,118 @@
+============================================================
+ EVIDENCIA FASE 4 - RF5: SEGURIDAD Y AUDITORIA
+ Generado: 2026-11-08 13:23
+============================================================
+
+==================================================================
+ PRUEBA DE AUTENTICACION Y AUTORIZACION POR ROL  (RF5)
+==================================================================
+
+--- A. AUTENTICACION ---
+
+  clave incorrecta           HTTP 401  usuario o clave incorrectos
+  usuario inexistente        HTTP 401  usuario o clave incorrectos
+    (el mismo mensaje en los dos casos: no se filtra que usuarios existen)
+  maria       (paciente)     HTTP 200  token emitido
+  admision1   (admisionista) HTTP 200  token emitido
+  drcarlos    (medico)       HTTP 200  token emitido
+  auditor1    (auditor)      HTTP 200  token emitido
+
+  sin token:                 HTTP 401
+  token alterado:            HTTP 401
+
+--- B. AUTORIZACION: quien puede ver la BITACORA ---
+
+  maria       HTTP 403  DENEGADO  -> el rol paciente no puede VER_AUDITORIA
+  admision1   HTTP 403  DENEGADO  -> el rol admisionista no puede VER_AUDITORIA
+  drcarlos    HTTP 403  DENEGADO  -> el rol medico no puede VER_AUDITORIA
+  auditor1    HTTP 200  PERMITIDO
+
+--- C. AUTORIZACION: quien puede VERIFICAR la cadena ---
+
+  drcarlos    HTTP 403  DENEGADO  -> el rol medico no puede VERIFICAR_AUDITORIA
+  auditor1    HTTP 200  PERMITIDO
+
+--- D. AUTORIZACION: quien puede INGESTAR ---
+
+  drcarlos    HTTP 401  DENEGADO
+  maria       HTTP 401  DENEGADO
+
+
+============================================================
+ VERIFICADOR DE LA BITACORA - CADENA INTACTA
+============================================================
+1. Iniciando sesion como 'auditor1'...
+   sesion abierta. rol: auditor
+   permisos: VER_AUDITORIA, VERIFICAR_AUDITORIA, VER_METRICAS, VER_COBERTURA
+
+2. Recorriendo la cadena de hash...
+   eventos revisados: 16
+
+--------------------------------------------------------------
+ RESULTADO: BITACORA INTEGRA
+ Los 16 eventos encadenan correctamente.
+ Ninguna fila fue modificada ni borrada.
+--------------------------------------------------------------
+
+
+============================================================
+ ALTERACION 1: se cambia un DENEGADO por PERMITIDO
+============================================================
+
+$ docker exec pg_nodo1 psql -U admin -d bus_db -c \
+    "UPDATE evento_auditoria SET resultado='PERMITIDO'"
+UPDATE 1
+2. Recorriendo la cadena de hash...
+   eventos revisados: 18
+
+--------------------------------------------------------------
+ RESULTADO: SE DETECTO MANIPULACION
+ 1 problema(s) en 18 eventos.
+--------------------------------------------------------------
+
+  FILA 43  ->  CONTENIDO_ALTERADO
+    el contenido de esta fila fue modificado despues de escribirse
+    hash guardado en la fila : 23c8b007e0f66a3c...
+    hash recalculado ahora   : fee4bc42f0b0b474...
+    contenido actual de la fila:
+      usuario:      auditor1
+      rol:          auditor
+      accion:       LOGIN
+      recurso:      Sesion
+      documento_id: None
+      resultado:    PERMITIDO
+
+--------------------------------------------------------------
+ La cadena de hash permite senalar la fila exacta.
+ Quien modifico el dato no pudo recalcular los hashes
+ siguientes sin reescribir toda la bitacora.
+--------------------------------------------------------------
+
+
+============================================================
+ ALTERACION 2: se restaura y se BORRA una fila del medio
+============================================================
+DELETE 1
+
+Al restaurar el valor original, la comprobacion de contenido
+de esa fila vuelve a cuadrar: el verificador no se queda
+'pegado', solo senala lo que de verdad esta mal.
+2. Recorriendo la cadena de hash...
+   eventos revisados: 19
+
+--------------------------------------------------------------
+ RESULTADO: SE DETECTO MANIPULACION
+ 1 problema(s) en 19 eventos.
+--------------------------------------------------------------
+
+  FILA 46  ->  CADENA_ROTA
+    el hash_anterior de esta fila no es el hash_actual de la fila previa: falta una fila o se reordenaron
+    esperaba  : 421f4cbd5cfaaa6a...
+    encontro  : e18906acb199103e...
+
+--------------------------------------------------------------
+ La cadena de hash permite senalar la fila exacta.
+ Quien modifico el dato no pudo recalcular los hashes
+ siguientes sin reescribir toda la bitacora.
+--------------------------------------------------------------
+
