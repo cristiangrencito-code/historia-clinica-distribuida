@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Portal Clinico - Plataforma de Interoperabilidad en Salud</title>
+<style>
+  :root {
+    --fondo: #f4f6f8;
+    --panel: #ffffff;
+    --borde: #d8dee4;
+    --texto: #1f2933;
+    --suave: #5c6b7a;
+    --azul: #1b5e8f;
+    --azul-claro: #e8f1f8;
+    --verde: #1d7a46;
+    --verde-claro: #e6f4ec;
+    --rojo: #a62828;
+    --rojo-claro: #fbeaea;
+    --ambar: #8a5a00;
+    --ambar-claro: #fdf3e0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--fondo); color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.5;
+  }
+  header {
+    background: var(--azul); color: #fff; padding: 14px 20px;
+    display: flex; flex-wrap: wrap; gap: 12px;
+    align-items: center; justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 17px; font-weight: 600; }
+  header .quien { font-size: 13px; text-align: right; }
+  header .quien b { font-size: 14px; }
+  nav {
+    background: #fff; border-bottom: 1px solid var(--borde);
+    padding: 0 20px; display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  nav a {
+    padding: 11px 16px; text-decoration: none; color: var(--suave);
+    font-size: 14px; border-bottom: 3px solid transparent;
+  }
+  nav a:hover { color: var(--azul); }
+  nav a.activa { color: var(--azul); border-bottom-color: var(--azul); font-weight: 600; }
+  nav a.vedada { color: #b3bcc5; }
+  main { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--borde);
+    border-radius: 8px; padding: 18px; margin-bottom: 16px;
+  }
+  .panel h2 { margin: 0 0 4px; font-size: 16px; }
+  .panel .sub { color: var(--suave); font-size: 13px; margin-bottom: 14px; }
+  label { display: block; font-size: 13px; color: var(--suave); margin-bottom: 4px; }
+  input {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--borde);
+    border-radius: 6px; font-size: 14px; font-family: inherit;
+    background: #fff; color: var(--texto);
+  }
+  input:focus { outline: 2px solid var(--azul-claro); border-color: var(--azul); }
+  button {
+    padding: 9px 16px; border: 0; border-radius: 6px; background: var(--azul);
+    color: #fff; font-size: 14px; font-family: inherit; cursor: pointer;
+  }
+  button:hover { background: #164d75; }
+  button.gris { background: #5c6b7a; }
+  button.rojo { background: var(--rojo); }
+  .fila { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .fila > div { flex: 1 1 180px; }
+  .aviso {
+    padding: 11px 13px; border-radius: 6px; font-size: 13.5px;
+    margin-bottom: 14px; border: 1px solid;
+  }
+  .aviso.ok    { background: var(--verde-claro); border-color: #b9ddc8; color: var(--verde); }
+  .aviso.error { background: var(--rojo-claro);  border-color: #e8bcbc; color: var(--rojo); }
+  .aviso.parcial { background: var(--ambar-claro); border-color: #e8cf9a; color: var(--ambar); }
+  .aviso.info  { background: var(--azul-claro); border-color: #bcd6e8; color: var(--azul); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--borde); }
+  th { background: #f8fafb; font-weight: 600; color: var(--suave); font-size: 12.5px;
+       text-transform: uppercase; letter-spacing: .3px; }
+  tr:last-child td { border-bottom: 0; }
+  .etiqueta {
+    display: inline-block; padding: 2px 8px; border-radius: 11px;
+    font-size: 11.5px; font-weight: 600; text-transform: uppercase;
+  }
+  .etiqueta.up   { background: var(--verde-claro); color: var(--verde); }
+  .etiqueta.down { background: var(--rojo-claro); color: var(--rojo); }
+  .barra { background: #e8edf1; border-radius: 5px; height: 9px; overflow: hidden; }
+  .barra > span { display: block; height: 100%; background: var(--verde); }
+  .numeros { display: flex; flex-wrap: wrap; gap: 12px; }
+  .numero {
+    flex: 1 1 150px; background: #f8fafb; border: 1px solid var(--borde);
+    border-radius: 7px; padding: 13px;
+  }
+  .numero .n { font-size: 25px; font-weight: 650; color: var(--azul); }
+  .numero .t { font-size: 12px; color: var(--suave); text-transform: uppercase;
+               letter-spacing: .3px; }
+  .atencion {
+    border: 1px solid var(--borde); border-radius: 7px;
+    padding: 13px; margin-bottom: 11px;
+  }
+  .atencion .cab {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    justify-content: space-between; margin-bottom: 9px;
+  }
+  .atencion .sede { font-weight: 650; color: var(--azul); }
+  .atencion .fecha { color: var(--suave); font-size: 13px; }
+  .campos { display: flex; flex-wrap: wrap; gap: 7px 22px; font-size: 13.5px; }
+  .campos div { flex: 1 1 210px; }
+  .campos span { color: var(--suave); }
+  pre {
+    background: #1f2933; color: #e8edf1; padding: 13px; border-radius: 6px;
+    overflow-x: auto; font-size: 12.5px; margin: 0;
+  }
+  .oculto { display: none; }
+  .centro { max-width: 390px; margin: 60px auto; }
+  .pie { color: var(--suave); font-size: 12.5px; margin-top: 7px; }
+</style>
+</head>
+<body>
+
+<!-- ====== PANTALLA DE INICIO DE SESION ====== -->
+<div id="pantallaLogin" class="oculto">
+  <div class="centro">
+    <div class="panel">
+      <h2>Portal Clinico</h2>
+      <p class="sub">Plataforma de Interoperabilidad en Salud</p>
+      <div id="errorLogin"></div>
+      <div style="margin-bottom:11px">
+        <label for="usuario">Usuario</label>
+        <input id="usuario" autocomplete="username">
+      </div>
+      <div style="margin-bottom:15px">
+        <label for="clave">Clave</label>
+        <input id="clave" type="password" autocomplete="current-password">
+      </div>
+      <button onclick="iniciarSesion()" style="width:100%">Entrar</button>
+      <p class="pie">
+        El bus firma un token JWT con el rol. La app lo valida con el
+        secreto compartido, sin volver a preguntarle al bus.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ====== APLICACION ====== -->
+<div id="pantallaApp" class="oculto">
+  <header>
+    <h1>Plataforma de Interoperabilidad en Salud</h1>
+    <div class="quien">
+      <div><b id="cabUsuario">-</b> &nbsp;|&nbsp; rol: <b id="cabRol">-</b></div>
+      <div id="cabPermisos" style="opacity:.85"></div>
+    </div>
+  </header>
+
+  <nav id="menu"></nav>
+
+  <main>
+    <div id="contenido"></div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   PORTAL CLINICO - RF6
+
+   Lo unico que hace este fichero es pintar. Toda decision de
+   seguridad la toma el servidor:
+
+     - el token se guarda aqui, pero se FIRMA y se VALIDA alla
+     - el menu oculta lo que el rol no puede, pero si alguien
+       entra a mano a la direccion, el servidor devuelve 403
+     - el admisionista no ve diagnosticos porque el servidor NO
+       LOS MANDA, no porque la pantalla los esconda
+
+   Ese es el punto: esconder un boton no es seguridad.
+   ============================================================ */
+
+/* Las cuatro vistas, con el permiso que exige cada una. Es la
+   misma tabla que tiene el servidor en seguridad.py; aqui solo
+   sirve para pintar el menu. */
+var VISTAS = [
+  { ruta: "/vista/paciente",     nombre: "Mi Historia",       permiso: "VER_HC_PROPIA" },
+  { ruta: "/vista/admisionista", nombre: "Admision",          permiso: "VER_DATOS_ADMINISTRATIVOS" },
+  { ruta: "/vista/medico",       nombre: "Historia Clinica",  permiso: "VER_HC_COMPLETA" },
+  { ruta: "/vista/reporte",      nombre: "Reporte de HC",     permiso: "VER_COBERTURA" }
+];
+
+var yo = null;
+
+function token()        { return localStorage.getItem("token"); }
+function guardarToken(t){ localStorage.setItem("token", t); }
+function borrarToken()  { localStorage.removeItem("token"); }
+
+/* ---------- llamada al servidor ---------- */
+async function pedir(ruta, opciones) {
+  opciones = opciones || {};
+  opciones.headers = opciones.headers || {};
+  if (token()) { opciones.headers["Authorization"] = "Bearer " + token(); }
+  var r = await fetch(ruta, opciones);
+  var cuerpo;
+  try { cuerpo = await r.json(); } catch (e) { cuerpo = {}; }
+  return { codigo: r.status, datos: cuerpo };
+}
+
+function escapar(t) {
+  if (t === null || t === undefined) { return "-"; }
+  return String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function fecha(t) {
+  if (!t) { return "-"; }
+  return String(t).replace("T", " ").substring(0, 16);
+}
+
+/* ---------- inicio de sesion ---------- */
+async function iniciarSesion() {
+  var u = document.getElementById("usuario").value.trim();
+  var c = document.getElementById("clave").value;
+  var caja = document.getElementById("errorLogin");
+  caja.innerHTML = "";
+
+  if (u === "" || c === "") {
+    caja.innerHTML = '<div class="aviso error">Escriba usuario y clave.</div>';
+    return;
+  }
+
+  var r = await pedir("/api/portal/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usuario: u, clave: c })
+  });
+
+  if (r.codigo !== 200) {
+    caja.innerHTML = '<div class="aviso error">HTTP ' + r.codigo + ' - ' +
+                     escapar(r.datos.error || "no se pudo entrar") + '</div>';
+    return;
+  }
+
+  guardarToken(r.datos.token);
+  /* Cada rol entra directo a la vista que le toca. */
+  var destino = "/vista/medico";
+  if (r.datos.rol === "paciente")     { destino = "/vista/paciente"; }
+  if (r.datos.rol === "admisionista") { destino = "/vista/admisionista"; }
+  if (r.datos.rol === "auditor")      { destino = "/vista/reporte"; }
+  window.location.href = destino;
+}
+
+function salir() {
+  borrarToken();
+  window.location.href = "/login";
+}
+
+/* ---------- menu ---------- */
+function pintarCabecera() {
+  document.getElementById("cabUsuario").textContent = yo.usuario;
+  document.getElementById("cabRol").textContent = yo.rol;
+  document.getElementById("cabPermisos").textContent = yo.permisos.join(" · ");
+
+  var aqui = window.location.pathname;
+  var html = "";
+  for (var i = 0; i < VISTAS.length; i++) {
+    var v = VISTAS[i];
+    var puede = yo.permisos.indexOf(v.permiso) >= 0;
+    var clases = [];
+    if (v.ruta === aqui) { clases.push("activa"); }
+    if (!puede) { clases.push("vedada"); }
+    var titulo = puede ? "" : ' title="su rol no tiene el permiso ' + v.permiso + '"';
+    html += '<a href="' + v.ruta + '" class="' + clases.join(" ") + '"' + titulo + '>' +
+            v.nombre + (puede ? "" : " &#128274;") + '</a>';
+  }
+  html += '<a href="#" onclick="salir();return false;" style="margin-left:auto">Salir</a>';
+  document.getElementById("menu").innerHTML = html;
+}
+
+/* ---------- avisos ---------- */
+function avisoDenegado(r) {
+  var d = r.datos;
+  var extra = "";
+  if (d.permisos_del_rol) {
+    extra = '<br>Su rol solo tiene: <b>' + escapar(d.permisos_del_rol.join(", ")) + '</b>';
+  }
+  return '<div class="aviso error"><b>ACCESO DENEGADO &nbsp;(HTTP ' + r.codigo + ')</b><br>' +
+         escapar(d.motivo || d.error) + extra +
+         '<br><br>Esta decision la tomo el SERVIDOR. Llamar al endpoint ' +
+         'a mano con curl devuelve exactamente lo mismo.</div>';
+}
+
+function avisoParcial(datos) {
+  if (datos.completo !== false) { return ""; }
+  var caidos = [];
+  var ns = datos.nodos_estado || [];
+  for (var i = 0; i < ns.length; i++) {
+    if (ns[i].estado !== "UP") { caidos.push(ns[i].nodo); }
+  }
+  return '<div class="aviso parcial"><b>RESULTADO PARCIAL</b><br>' +
+         'No respondieron: <b>' + escapar(caidos.join(", ")) + '</b>. ' +
+         'Lo que se muestra esta incompleto, pero el sistema sigue ' +
+         'funcionando con las sedes que quedan en pie.</div>';
+}
+
+function tablaNodos(nodos) {
+  if (!nodos) { return ""; }
+  var html = '<table><tr><th>Nodo</th><th>Estado</th><th>Detalle</th></tr>';
+  for (var i = 0; i < nodos.length; i++) {
+    var n = nodos[i];
+    var cl = n.estado === "UP" ? "up" : "down";
+    html += '<tr><td>' + escapar(n.nodo) + '</td>' +
+            '<td><span class="etiqueta ' + cl + '">' + escapar(n.estado) + '</span></td>' +
+            '<td style="color:#5c6b7a;font-size:12.5px">' +
+            escapar(n.error ? String(n.error).substring(0, 90) : "responde") +
+            '</td></tr>';
+  }
+  return html + '</table>';
+}
+
+/* ---------- pintar una historia clinica ---------- */
+function pintarHistoria(d, clinico) {
+  var p = d.paciente;
+  var html = avisoParcial(d);
+
+  if (d.filtrado) {
+    html += '<div class="aviso info"><b>Vista administrativa.</b> ' +
+            escapar(d.filtrado) + '. El servidor no envio esos campos.</div>';
+  }
+
+  html += '<div class="panel"><h2>' + escapar(p.nombre_completo) + '</h2>' +
+          '<p class="sub">' + escapar(p.tipo_documento) + ' ' +
+          escapar(p.documento_id) + '</p><div class="campos">' +
+          '<div><span>Nacimiento:</span> ' + escapar(p.fecha_nacimiento) + '</div>' +
+          '<div><span>Edad:</span> ' + escapar(p.edad) + '</div>' +
+          '<div><span>Sexo:</span> ' + escapar(p.sexo) + '</div>' +
+          '<div><span>Ocupacion:</span> ' + escapar(p.ocupacion) + '</div>' +
+          '<div><span>Municipio:</span> ' + escapar(p.municipio_residencia) + '</div>' +
+          '<div><span>Patient FHIR:</span> ' +
+          (p.fhir_patient_id
+            ? '<b style="color:#1d7a46">' + escapar(p.fhir_patient_id) + '</b>'
+            : '<span style="color:#8a5a00">sin normalizar</span>') +
+          '</div></div></div>';
+
+  /* Resumen por sede: la prueba de la consulta unificada */
+  if (d.sedes && d.sedes.length > 0) {
+    html += '<div class="panel"><h2>Historia repartida entre sedes</h2>' +
+            '<p class="sub">La fragmentacion reparte por documento, pero la ' +
+            'historia esta repartida por sede. Esta consulta junta las ' +
+            d.sedes.length + '.</p><table><tr><th>Sede</th><th>Atenciones</th></tr>';
+    for (var i = 0; i < d.sedes.length; i++) {
+      html += '<tr><td>' + escapar(d.sedes[i].sede) + '</td><td>' +
+              escapar(d.sedes[i].atenciones) + '</td></tr>';
+    }
+    html += '</table></div>';
+  }
+
+  /* Atenciones */
+  html += '<div class="panel"><h2>Atenciones (' + d.atenciones.length + ')</h2>' +
+          '<p class="sub">En orden de ingreso, vengan del nodo que vengan.</p>';
+
+  if (d.atenciones.length === 0) {
+    html += '<p style="color:#5c6b7a">Sin atenciones registradas.</p>';
+  }
+
+  for (var j = 0; j < d.atenciones.length; j++) {
+    var a = d.atenciones[j];
+    html += '<div class="atencion"><div class="cab">' +
+            '<span class="sede">' + escapar(a.entidad_salud) + '</span>' +
+            '<span class="fecha">' + fecha(a.fecha_ingreso) + '</span></div>' +
+            '<div class="campos">' +
+            '<div><span>Entorno:</span> ' + escapar(a.entorno_atencion) + '</div>' +
+            '<div><span>Via de ingreso:</span> ' + escapar(a.via_ingreso) + '</div>' +
+            '<div><span>Triage:</span> ' + escapar(a.clasificacion_triage) + '</div>';
+
+    if (clinico) {
+      html += '<div style="flex:1 1 100%"><span>Motivo:</span> ' +
+              escapar(a.causa_atencion) + '</div>' +
+              '<div><span>Dx de ingreso:</span> <b>' +
+              escapar(a.diagnostico_ingreso) + '</b></div>' +
+              '<div><span>Dx de egreso:</span> <b>' +
+              escapar(a.diagnostico_egreso) + '</b></div>';
+      if (a.alergias) {
+        html += '<div><span>Alergias:</span> ' + escapar(a.alergias) + '</div>';
+      }
+      if (a.antecedente_familiar) {
+        html += '<div><span>Antecedente familiar:</span> ' +
+                escapar(a.antecedente_familiar) + '</div>';
+      }
+    }
+
+    if (a.fecha_salida) {
+      html += '<div><span>Salida:</span> ' + fecha(a.fecha_salida) + ' (' +
+              escapar(a.condicion_salida) + ')</div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+
+  /* Medicamentos */
+  if (clinico && d.medicamentos && d.medicamentos.length > 0) {
+    html += '<div class="panel"><h2>Medicamentos</h2><table>' +
+            '<tr><th>Medicamento</th><th>Dosis</th><th>Via</th>' +
+            '<th>Frecuencia</th><th>Dias</th><th>Profesional</th></tr>';
+    for (var k = 0; k < d.medicamentos.length; k++) {
+      var m = d.medicamentos[k];
+      html += '<tr><td>' + escapar(m.descripcion_medicamento) + '</td><td>' +
+              escapar(m.dosis) + '</td><td>' + escapar(m.via_administracion) +
+              '</td><td>' + escapar(m.frecuencia) + '</td><td>' +
+              escapar(m.dias_tratamiento) + '</td><td>' +
+              escapar(m.profesional) + '</td></tr>';
+    }
+    html += '</table></div>';
+  }
+
+  html += '<div class="panel"><h2>De donde vino cada dato</h2>' +
+          '<p class="sub">La consulta se mando a los tres nodos. ' +
+          'Los que no respondan se descartan y el sistema sigue.</p>' +
+          tablaNodos(d.nodos_estado) + '</div>';
+
+  return html;
+}
+
+/* ============================================================
+   VISTA 1 - PACIENTE
+   No hay casilla para escribir un documento, y es a proposito:
+   el documento sale DEL TOKEN, que esta firmado. Si lo escribiera
+   el paciente, podria escribir el de otro.
+   ============================================================ */
+async function vistaPaciente() {
+  var c = document.getElementById("contenido");
+  c.innerHTML = '<div class="panel"><h2>Mi Historia Clinica</h2>' +
+                '<p class="sub">Cargando...</p></div>';
+
+  if (yo.permisos.indexOf("VER_HC_PROPIA") < 0) {
+    c.innerHTML = '<div class="panel"><h2>Mi Historia Clinica</h2>' +
+      '<div class="aviso error"><b>Esta vista no corresponde a su rol (' +
+      escapar(yo.rol) + ').</b><br>Solo el rol <b>paciente</b> tiene el ' +
+      'permiso VER_HC_PROPIA.</div></div>';
+    return;
+  }
+
+  var r = await pedir("/api/portal/hc/" + yo.documento_id);
+
+  if (r.codigo === 403 || r.codigo === 401) { c.innerHTML = avisoDenegado(r); return; }
+  if (r.codigo !== 200) {
+    c.innerHTML = '<div class="aviso error">HTTP ' + r.codigo + ' - ' +
+                  escapar(r.datos.error) + '</div>';
+    return;
+  }
+
+  c.innerHTML =
+    '<div class="aviso ok"><b>Su historia clinica.</b> El documento ' +
+    escapar(yo.documento_id) + ' viene firmado dentro de su token: ' +
+    'no se puede cambiar para ver la historia de otra persona.</div>' +
+    pintarHistoria(r.datos, true) +
+    '<div class="panel"><h2>Comprobar el control de pertenencia</h2>' +
+    '<p class="sub">Pedir la historia de OTRO documento, con el mismo token.</p>' +
+    '<button class="rojo" onclick="probarOtroPaciente()">' +
+    'Intentar ver la historia de 1033445566</button>' +
+    '<div id="pruebaOtro" style="margin-top:12px"></div></div>';
+}
+
+async function probarOtroPaciente() {
+  var r = await pedir("/api/portal/hc/1033445566");
+  document.getElementById("pruebaOtro").innerHTML =
+    (r.codigo === 200
+      ? '<div class="aviso error">Fallo del control: devolvio datos.</div>'
+      : avisoDenegado(r));
+}
+
+/* ============================================================
+   VISTA 2 - ADMISIONISTA
+   Ve datos administrativos. El servidor le quita diagnosticos,
+   medicamentos y alergias antes de enviar nada.
+   ============================================================ */
+function vistaAdmisionista() {
+  var c = document.getElementById("contenido");
+  c.innerHTML =
+    '<div class="panel"><h2>Admision</h2>' +
+    '<p class="sub">Buscar al paciente antes de admitirlo. ' +
+    'Esta vista NO muestra informacion clinica.</p>' +
+    '<div class="fila">' +
+    '<div><label for="bDoc">Documento</label><input id="bDoc" placeholder="1098765432"></div>' +
+    '<div><label for="bNom">o Nombre</label><input id="bNom" placeholder="MARIA"></div>' +
+    '<div style="flex:0 0 auto"><button onclick="buscar()">Buscar</button></div>' +
+    '</div></div><div id="resultado"></div>';
+
+  document.getElementById("bDoc").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { buscar(); }
+  });
+  document.getElementById("bNom").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { buscar(); }
+  });
+}
+
+async function buscar() {
+  var doc = document.getElementById("bDoc").value.trim();
+  var nom = document.getElementById("bNom").value.trim();
+  var caja = document.getElementById("resultado");
+  caja.innerHTML = '<div class="panel"><p class="sub">Buscando en los tres nodos...</p></div>';
+
+  var r = await pedir("/api/portal/buscar?documento=" +
+                      encodeURIComponent(doc) + "&nombre=" + encodeURIComponent(nom));
+
+  if (r.codigo === 403 || r.codigo === 401) { caja.innerHTML = avisoDenegado(r); return; }
+  if (r.codigo !== 200) {
+    caja.innerHTML = '<div class="aviso error">HTTP ' + r.codigo + ' - ' +
+                     escapar(r.datos.error) + '</div>';
+    return;
+  }
+
+  var d = r.datos;
+  var html = avisoParcial(d) + '<div class="panel"><h2>' +
+             d.resultados.length + ' resultado(s)</h2>' +
+             '<p class="sub">La busqueda se mando a los tres nodos a la vez.</p>';
+
+  if (d.resultados.length === 0) {
+    html += '<p style="color:#5c6b7a">Ningun paciente coincide.</p>';
+  } else {
+    html += '<table><tr><th>Documento</th><th>Nombre</th><th>Edad</th>' +
+            '<th>Municipio</th><th>FHIR</th><th></th></tr>';
+    for (var i = 0; i < d.resultados.length; i++) {
+      var p = d.resultados[i];
+      html += '<tr><td>' + escapar(p.documento_id) + '</td><td>' +
+              escapar(p.nombre_completo) + '</td><td>' + escapar(p.edad) +
+              '</td><td>' + escapar(p.municipio_residencia) + '</td><td>' +
+              (p.fhir_patient_id
+                ? '<span class="etiqueta up">si</span>'
+                : '<span class="etiqueta down">no</span>') +
+              '</td><td><button onclick="verHistoria(' + p.documento_id +
+              ')">Abrir</button></td></tr>';
+    }
+    html += '</table>';
+  }
+  html += '</div><div id="historia"></div>' + tablaNodosPanel(d.nodos_estado);
+  caja.innerHTML = html;
+}
+
+function tablaNodosPanel(nodos) {
+  return '<div class="panel"><h2>Nodos consultados</h2>' + tablaNodos(nodos) + '</div>';
+}
+
+async function verHistoria(doc) {
+  var caja = document.getElementById("historia");
+  caja.innerHTML = '<div class="panel"><p class="sub">Cargando...</p></div>';
+
+  var r = await pedir("/api/portal/hc/" + doc);
+  if (r.codigo === 403 || r.codigo === 401) { caja.innerHTML = avisoDenegado(r); return; }
+  if (r.codigo !== 200) {
+    caja.innerHTML = '<div class="aviso error">HTTP ' + r.codigo + ' - ' +
+                     escapar(r.datos.error) + '</div>';
+    return;
+  }
+  /* clinico solo si el rol lo tiene; si no, el servidor ya lo
+     habra quitado y aqui tampoco se pinta. */
+  var clinico = yo.permisos.indexOf("VER_HC_COMPLETA") >= 0;
+  caja.innerHTML = pintarHistoria(r.datos, clinico);
+  caja.scrollIntoView({ behavior: "smooth" });
+}
+
+/* ============================================================
+   VISTA 3 - MEDICO
+   La historia completa, de las tres sedes.
+   ============================================================ */
+function vistaMedico() {
+  var c = document.getElementById("contenido");
+  var puede = yo.permisos.indexOf("VER_HC_COMPLETA") >= 0;
+
+  c.innerHTML =
+    '<div class="panel"><h2>Historia Clinica</h2>' +
+    '<p class="sub">Vista clinica completa: diagnosticos, medicamentos y ' +
+    'antecedentes de las tres sedes.</p>' +
+    (puede ? '' : '<div class="aviso parcial">Su rol es <b>' + escapar(yo.rol) +
+      '</b>. Puede abrir esta pantalla, pero el servidor no le va a enviar ' +
+      'datos clinicos. Pruebelo: es la demostracion de que el control no ' +
+      'esta en la pantalla.</div>') +
+    '<div class="fila">' +
+    '<div><label for="mDoc">Documento del paciente</label>' +
+    '<input id="mDoc" value="1098765432"></div>' +
+    '<div style="flex:0 0 auto"><button onclick="abrirHC()">Abrir historia</button></div>' +
+    '</div></div><div id="historia"></div>';
+
+  document.getElementById("mDoc").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { abrirHC(); }
+  });
+}
+
+function abrirHC() {
+  verHistoria(document.getElementById("mDoc").value.trim());
+}
+
+/* ============================================================
+   VISTA 4 - REPORTE DE HC + TABLERO DE COBERTURA
+   ============================================================ */
+async function vistaReporte() {
+  var c = document.getElementById("contenido");
+  c.innerHTML = '<div class="panel"><h2>Reporte de Historias Clinicas</h2>' +
+                '<p class="sub">Cargando...</p></div>';
+
+  var r = await pedir("/api/portal/cobertura");
+  if (r.codigo === 403 || r.codigo === 401) { c.innerHTML = avisoDenegado(r); return; }
+  if (r.codigo !== 200) {
+    c.innerHTML = '<div class="aviso error">HTTP ' + r.codigo + ' - ' +
+                  escapar(r.datos.error) + '</div>';
+    return;
+  }
+
+  var d = r.datos;
+  var g = d.cobertura_global;
+  var m = d.metricas_bus || {};
+
+  var html = avisoParcial(d) +
+    '<div class="panel"><h2>Cobertura de normalizacion a FHIR</h2>' +
+    '<p class="sub">Se mide contando usuario.fhir_patient_id. Esa columna la ' +
+    'rellena el bus cuando consigue crear el Patient en HAPI: no es un ' +
+    'contador aparte que se pueda desincronizar, es la consecuencia de que ' +
+    'la normalizacion ocurrio de verdad.</p>' +
+    '<div class="numeros">' +
+    '<div class="numero"><div class="n">' + escapar(g.porcentaje) + '%</div>' +
+    '<div class="t">Cobertura global</div></div>' +
+    '<div class="numero"><div class="n">' + escapar(g.pacientes) + '</div>' +
+    '<div class="t">Pacientes</div></div>' +
+    '<div class="numero"><div class="n">' + escapar(g.con_fhir) + '</div>' +
+    '<div class="t">Normalizados</div></div>' +
+    '<div class="numero"><div class="n">' + escapar(g.sin_fhir) + '</div>' +
+    '<div class="t">Pendientes</div></div>' +
+    '</div></div>';
+
+  /* Por sede */
+  html += '<div class="panel"><h2>Cobertura por sede</h2>' +
+          '<p class="sub">La sede es atencion.entidad_salud, que no coincide ' +
+          'con el nodo: un paciente de Sincelejo puede estar almacenado en ' +
+          'cualquiera de los tres nodos.</p>' +
+          '<table><tr><th>Sede</th><th>Pacientes</th><th>Atenciones</th>' +
+          '<th>Normalizados</th><th style="width:170px">Cobertura</th></tr>';
+  for (var i = 0; i < d.por_sede.length; i++) {
+    var s = d.por_sede[i];
+    html += '<tr><td>' + escapar(s.sede) + '</td><td>' + escapar(s.pacientes) +
+            '</td><td>' + escapar(s.atenciones) + '</td><td>' +
+            escapar(s.con_fhir) + '</td><td>' +
+            '<div class="barra"><span style="width:' + s.porcentaje + '%"></span></div>' +
+            '<small style="color:#5c6b7a">' + escapar(s.porcentaje) + '%</small>' +
+            '</td></tr>';
+  }
+  html += '</table></div>';
+
+  /* Por nodo */
+  html += '<div class="panel"><h2>Cobertura por nodo (fragmentacion)</h2>' +
+          '<p class="sub">Reparto por rango de documento: ' +
+          'nodo1 &lt; 4.000.000.000 &le; nodo2 &lt; 7.000.000.000 &le; nodo3.</p>' +
+          '<table><tr><th>Nodo</th><th>Pacientes</th><th>Normalizados</th>' +
+          '<th style="width:170px">Cobertura</th></tr>';
+  for (var j = 0; j < d.por_nodo.length; j++) {
+    var n = d.por_nodo[j];
+    html += '<tr><td>' + escapar(n.nodo) + '</td><td>' + escapar(n.pacientes) +
+            '</td><td>' + escapar(n.con_fhir) + '</td><td>' +
+            '<div class="barra"><span style="width:' + n.porcentaje + '%"></span></div>' +
+            '<small style="color:#5c6b7a">' + escapar(n.porcentaje) + '%</small>' +
+            '</td></tr>';
+  }
+  html += '</table></div>';
+
+  /* Metricas del bus */
+  html += '<div class="panel"><h2>Metricas del bus de integracion</h2>' +
+          '<p class="sub">Lo que pide el RNF: mensajes, latencia media de ' +
+          'extremo a extremo y porcentaje de fallidos.</p>' +
+          '<div class="numeros">' +
+          '<div class="numero"><div class="n">' +
+          escapar(m.hsb_mensajes_total || "0") + '</div><div class="t">Mensajes</div></div>' +
+          '<div class="numero"><div class="n">' +
+          escapar(m.hsb_mensajes_entregados || "0") + '</div><div class="t">Entregados</div></div>' +
+          '<div class="numero"><div class="n">' +
+          escapar(m.hsb_latencia_media_ms || "0") + ' ms</div><div class="t">Latencia media</div></div>' +
+          '<div class="numero"><div class="n">' +
+          escapar(m.hsb_porcentaje_fallidos || "0") + '%</div><div class="t">Fallidos</div></div>' +
+          '<div class="numero"><div class="n">' +
+          escapar(m.hsb_mensajes_rechazados || "0") + '</div><div class="t">Rechazados</div></div>' +
+          '<div class="numero"><div class="n">' +
+          escapar(m.hsb_mensajes_muertos || "0") + '</div><div class="t">En la DLQ</div></div>' +
+          '</div></div>';
+
+  /* Estado de los nodos */
+  html += '<div class="panel"><h2>Estado de las sedes</h2>' +
+          '<p class="sub">Si se apaga una sede, este reporte NO falla: ' +
+          'sigue con las que respondan y avisa de que esta incompleto.</p>' +
+          tablaNodos(d.nodos_estado) + '</div>';
+
+  c.innerHTML = html;
+}
+
+/* ============================================================
+   ARRANQUE
+   ============================================================ */
+async function arrancar() {
+  var ruta = window.location.pathname;
+
+  /* Pantalla de inicio de sesion */
+  if (ruta === "/login" || ruta === "/login/") {
+    document.getElementById("pantallaLogin").classList.remove("oculto");
+    document.getElementById("usuario").focus();
+    return;
+  }
+
+  /* Para todo lo demas hace falta token. Se pregunta al servidor
+     si sigue siendo valido: podria haber caducado. */
+  if (!token()) { window.location.href = "/login"; return; }
+
+  var r = await pedir("/api/portal/yo");
+  if (r.codigo !== 200) { borrarToken(); window.location.href = "/login"; return; }
+
+  yo = r.datos;
+  document.getElementById("pantallaApp").classList.remove("oculto");
+  pintarCabecera();
+
+  if (ruta.indexOf("/vista/paciente") === 0)     { vistaPaciente(); }
+  else if (ruta.indexOf("/vista/admisionista") === 0) { vistaAdmisionista(); }
+  else if (ruta.indexOf("/vista/medico") === 0)  { vistaMedico(); }
+  else if (ruta.indexOf("/vista/reporte") === 0) { vistaReporte(); }
+}
+
+arrancar();
+</script>
+</body>
+</html>

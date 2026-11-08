@@ -7,17 +7,25 @@ import os
 # Usar nombres de contenedores cuando se ejecuta en Docker, localhost cuando se ejecuta localmente
 USE_DOCKER_NAMES = os.getenv("USE_DOCKER_NAMES", "false").lower() == "true"
 
+# Cada nodo lleva un "nombre" propio.
+#
+# POR QUE: antes el nombre se armaba con el puerto, como
+# f"nodo_{nodo['port']}". Dentro de Docker los tres contenedores
+# escuchan en el 5432, asi que los tres se llamaban "nodo_5432"
+# y era imposible saber cual se habia caido. Las metricas salian
+# peor todavia: tres series con la misma etiqueta, que Prometheus
+# considera invalido.
 if USE_DOCKER_NAMES:
     NODOS = [
-        {"host": "pg_nodo1", "port": 5432, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
-        {"host": "pg_nodo2", "port": 5432, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
-        {"host": "pg_nodo3", "port": 5432, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
+        {"nombre": "nodo1", "host": "pg_nodo1", "port": 5432, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
+        {"nombre": "nodo2", "host": "pg_nodo2", "port": 5432, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
+        {"nombre": "nodo3", "host": "pg_nodo3", "port": 5432, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
     ]
 else:
     NODOS = [
-        {"host": "localhost", "port": 5433, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
-        {"host": "localhost", "port": 5434, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
-        {"host": "localhost", "port": 5435, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
+        {"nombre": "nodo1", "host": "localhost", "port": 5433, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
+        {"nombre": "nodo2", "host": "localhost", "port": 5434, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
+        {"nombre": "nodo3", "host": "localhost", "port": 5435, "user": "admin", "password": "admin", "dbname": "historia_clinica"},
     ]
 
 def ejecutar_query_en_todos_los_nodos(query):
@@ -25,7 +33,7 @@ def ejecutar_query_en_todos_los_nodos(query):
     nodos_estado = []
     
     for nodo in NODOS:
-        nodo_info = {"nodo": f"nodo_{nodo['port']}", "estado": "DOWN", "error": None}
+        nodo_info = {"nodo": nodo["nombre"], "estado": "DOWN", "error": None}
         try:
             conn = psycopg2.connect(
                 host=nodo["host"],

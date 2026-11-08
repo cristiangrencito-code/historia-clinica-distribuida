@@ -8,7 +8,6 @@ import os
 import sys
 import middleware
 import psycopg2
-from fastapi_mcp import FastApiMCP
 
 # Agregar backend al path para imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
@@ -55,6 +54,22 @@ else:
 
 
 from fastapi.responses import HTMLResponse, RedirectResponse
+
+
+# ============================================================
+#  PORTAL CLINICO  -  las cuatro vistas por rol  (RF6)
+#
+#  Vive en portal.py, aparte, por dos razones:
+#    - este fichero ya tiene mas de mil lineas
+#    - todo lo que hay ahi esta protegido por token y rol,
+#      mientras que los endpoints de aqui son los de carga y
+#      administracion que ya existian.
+#
+#  include_router solo pega la lista de rutas de portal.py a
+#  esta aplicacion. No hace nada mas.
+# ============================================================
+import portal
+app.include_router(portal.router)
 
 
 @app.get("/", response_class=RedirectResponse)
@@ -1139,21 +1154,6 @@ async def buscar_profesionales(nombre: str, limite: int = 20):
 # Estáticos al final para no tapar rutas
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
-# ============================================================================
-# MCP - Model Context Protocol
-# Expone todos los endpoints de la API como herramientas para agentes de IA
-# ============================================================================
-mcp = FastApiMCP(
-    app,
-    name="Historia Clínica Distribuida MCP",
-    description=(
-        "Servidor MCP del sistema de Historia Clínica Distribuida. "
-        "Permite a agentes de IA consultar y gestionar pacientes FHIR, "
-        "ejecutar queries SQL distribuidas, y monitorear el estado de los nodos PostgreSQL."
-    ),
-)
-mcp.mount()  # Disponible en /mcp
-
 PORT = 8001
 
 if __name__ == "__main__":
@@ -1164,5 +1164,4 @@ if __name__ == "__main__":
     print("  → Consulta:   http://localhost:{}/consulta-hc".format(PORT))
     print("  → Carga HC:   http://localhost:{}/carga-hc".format(PORT))
     print("  → Health:     http://localhost:{}/api/health".format(PORT))
-    print("  → MCP Server: http://localhost:{}/mcp\n".format(PORT))
     uvicorn.run(app, host="0.0.0.0", port=PORT)
