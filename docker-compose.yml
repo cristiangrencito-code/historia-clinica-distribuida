@@ -10,6 +10,13 @@ services:
       - "8001:8001"
     environment:
       - PYTHONUNBUFFERED=1
+      # La app VALIDA los tokens que emite el bus, asi que
+      # necesita el mismo secreto. No le hace falta llamar al bus
+      # para comprobar una sesion (ver seguridad.py).
+      - JWT_SECRETO=${JWT_SECRETO:-DESARROLLO-NO-USAR-EN-PRODUCCION}
+      # Clave de servicio para anotar en la bitacora del bus.
+      - SEDE_CLAVE=${SEDE_CLAVE:-DESARROLLO-CLAVE-DE-SEDE}
+      - HSB_URL=http://hsb:8002
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./templates:/app/templates
@@ -22,6 +29,83 @@ services:
       pg_nodo3:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - historia_clinica_net
+
+  # ---------------------------------------------------------------
+  #  HSB - Health Service Bus  (RF1 y RF3)
+  #  Recibe HL7 v2 / CSV / JSON, valida, transforma a FHIR,
+  #  garantiza idempotencia y reintenta lo que falla.
+  # ---------------------------------------------------------------
+  hsb:
+    # El contexto es la raiz y no ./hsb para poder copiar
+    # seguridad.py, que comparten el bus y la app.
+    build:
+      context: .
+      dockerfile: hsb/Dockerfile
+    container_name: hsb_bus
+    ports:
+      - "8002:8002"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - HAPI_URL=http://hapi-fhir:8080/fhir
+      - BUS_DB_HOST=pg_nodo1
+      - BUS_DB_NAME=bus_db
+      - BUS_DB_USER=admin
+      - BUS_DB_PASSWORD=admin
+      - HSB_MAX_INTENTOS=8
+      - HSB_ESPERA_BASE=2
+      # Los secretos salen de .env si existe (.env esta en
+      # .gitignore). Si no existe, se usa el valor de desarrollo
+      # y el /health lo avisa. Asi el proyecto arranca con un
+      # solo comando sin tener secretos en el repositorio.
+      - JWT_SECRETO=${JWT_SECRETO:-DESARROLLO-NO-USAR-EN-PRODUCCION}
+      - SEDE_CLAVE=${SEDE_CLAVE:-DESARROLLO-CLAVE-DE-SEDE}
+      - JWT_VIGENCIA_MINUTOS=60
+    depends_on:
+      pg_nodo1:
+        condition: service_healthy
+      pg_nodo2:
+        condition: service_healthy
+      pg_nodo3:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - historia_clinica_net
+
+  # ---------------------------------------------------------------
+  #  MIRTH CONNECT  -  adaptador de protocolo HL7 v2 (RF1)
+  #  Recibe MLLP en 6661, responde el ACK y reenvia el HL7 crudo
+  #  al HSB. La transformacion y las garantias de entrega las
+  #  hace el bus, no Mirth.
+  # ---------------------------------------------------------------
+  mirth:
+    image: nextgenhealthcare/connect:4.5.2
+    container_name: mirth_connect
+    hostname: mirth
+    ports:
+      - "8443:8443"   # consola de administracion
+      - "6661:6661"   # entrada HL7 v2 por MLLP
+    depends_on:
+      - hsb
+    restart: unless-stopped
+    networks:
+      - historia_clinica_net
+
+  # Carga y despliega el canal automaticamente (contenedor de un solo uso)
+  mirth-init:
+    image: curlimages/curl:8.5.0
+    container_name: mirth_init
+    depends_on:
+      - mirth
+    environment:
+      # El cargador inyecta esta clave en la cabecera del canal.
+      - SEDE_CLAVE=${SEDE_CLAVE:-DESARROLLO-CLAVE-DE-SEDE}
+    volumes:
+      - ./infra/cargar-canal-mirth.sh:/cargar.sh:ro
+      - ./hsb/canal-sede1-mllp.xml:/canales/canal-sede1-mllp.xml:ro
+    entrypoint: ["sh", "/cargar.sh"]
+    restart: "no"
     networks:
       - historia_clinica_net
 
@@ -46,7 +130,13 @@ services:
         condition: service_healthy
     restart: unless-stopped
     networks:
-      - historia_clinica_net
+      historia_clinica_net:
+        # Alias SIN guion bajo: Tomcat rechaza con HTTP 400 los
+        # nombres de host que lleven '_', porque la RFC no los
+        # permite. El nombre del contenedor (hapi_fhir_server) si
+        # los tiene, asi que los clientes internos usan este alias.
+        aliases:
+          - hapi-fhir
     healthcheck:
       disable: true
 
@@ -61,6 +151,10 @@ services:
       POSTGRES_DB: historia_clinica
     volumes:
       - pg_data_nodo1:/var/lib/postgresql/data
+      - ./infra/crear-bases-auxiliares.sh:/docker-entrypoint-initdb.d/00-bases.sh:ro
+      - ./infra/bus-schema.sql:/docker-entrypoint-initdb.d/bus-schema.sql:ro
+      - ./nodo1.sql:/docker-entrypoint-initdb.d/01-esquema.sql:ro
+      - ./infra/semilla-nodo1.sql:/docker-entrypoint-initdb.d/02-datos.sql:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d historia_clinica" ]
       interval: 5s
@@ -82,6 +176,8 @@ services:
       POSTGRES_DB: historia_clinica
     volumes:
       - pg_data_nodo2:/var/lib/postgresql/data
+      - ./nodo2.sql:/docker-entrypoint-initdb.d/01-esquema.sql:ro
+      - ./infra/semilla-nodo2.sql:/docker-entrypoint-initdb.d/02-datos.sql:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d historia_clinica" ]
       interval: 5s
@@ -103,6 +199,8 @@ services:
       POSTGRES_DB: historia_clinica
     volumes:
       - pg_data_nodo3:/var/lib/postgresql/data
+      - ./nodo3.sql:/docker-entrypoint-initdb.d/01-esquema.sql:ro
+      - ./infra/semilla-nodo3.sql:/docker-entrypoint-initdb.d/02-datos.sql:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d historia_clinica" ]
       interval: 5s
