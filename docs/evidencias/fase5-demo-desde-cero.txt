@@ -1,0 +1,36 @@
+============================================================
+ DEMOSTRACION COMPLETA DESDE CERO - 10/11/2026
+ docker compose down -v && docker compose up -d --build
+============================================================
+
+1. ARRANQUE           7 contenedores arriba en 45 s, sin pasos manuales.
+                      El canal de Mirth SEDE1-HL7-MLLP se desplego solo.
+
+2. COBERTURA INICIAL  0.0%  (7 pacientes cargados, 0 normalizados a FHIR)
+
+3. INGESTA            HL7 v2 por MLLP:6661 -> ACK^A01 -> ENTREGADO
+                      CSV  por HTTP            -> ENTREGADO
+                      JSON por HTTP            -> ENTREGADO
+                      En HAPI: 3 Patient, 3 Encounter, 3 Condition, 3 Observation
+
+4. IDEMPOTENCIA       9 envios en total (3 por sede, 3 veces).
+                      Resultado: 3 mensajes en la cola, 3 Patient en HAPI.
+                      Las sedes 2 y 3 responden DUPLICADO; la 1 responde
+                      ACK porque el MLLP no propaga el veredicto, pero
+                      tampoco crea un segundo paciente.
+
+5. DEGRADACION        3 nodos -> completo=True
+                      2 nodos -> completo=False, SIGUE RESPONDIENDO
+                      1 nodo  -> completo=False, SIGUE RESPONDIENDO
+                      Recuperacion automatica al volver a levantarlos.
+
+6. BITACORA           Acceso denegado real: paciente maria pidiendo la
+                      historia del documento 1033445566 -> HTTP 403.
+                      Se altera esa fila por detras con UPDATE directo:
+                      el verificador senala FILA 18 CONTENIDO_ALTERADO,
+                      con el hash guardado y el recalculado.
+
+7. CONSULTA UNIFICADA Historia de Maria: 3 atenciones en 3 sedes.
+
+PRUEBAS UNITARIAS     43 pasadas, 0 fallos (tests/prueba-normalizador.py)
+============================================================
