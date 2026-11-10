@@ -871,21 +871,48 @@ def ver_cola():
 
 @app.get("/dlq")
 def ver_dlq():
-    """Cola de mensajes muertos: los que agotaron los reintentos."""
+    """
+    Lo que no se entrego, separado en dos listas.
+
+    MUERTO y RECHAZADO no son lo mismo y por eso van aparte:
+
+      MUERTO     el mensaje estaba bien, pero su destino fallo.
+                 Se reintento hasta agotar el limite. Tiene
+                 sentido reprocesarlo cuando el destino vuelva.
+
+      RECHAZADO  el mensaje esta mal formado. Reintentarlo daria
+                 exactamente el mismo error, asi que no se
+                 reintenta: hay que corregirlo en la sede.
+
+    Devolverlos en una sola lista haria creer que se arreglan
+    igual, y no es asi.
+    """
     con = None
     try:
         con = conectar_bus()
         cur = con.cursor(cursor_factory=RealDictCursor)
         cur.execute(
-            "SELECT hash_mensaje, sede, formato, intentos, error_detalle, "
-            "       recibido_en FROM mensaje_bus "
+            "SELECT hash_mensaje, sede, formato, estado, intentos, "
+            "       error_detalle, recibido_en FROM mensaje_bus "
             "WHERE estado IN ('MUERTO','RECHAZADO') ORDER BY id DESC LIMIT 50")
         filas = cur.fetchall()
         cur.close()
+        muertos = []
+        rechazados = []
         for f in filas:
             f["hash_mensaje"] = f["hash_mensaje"][:12]
             f["recibido_en"] = str(f["recibido_en"])
-        return {"mensajes_muertos": filas}
+            if f["estado"] == "MUERTO":
+                muertos.append(f)
+            else:
+                rechazados.append(f)
+        return {
+            "mensajes_muertos": muertos,
+            "mensajes_rechazados": rechazados,
+            "nota": ("MUERTO: el destino fallo y se agotaron los reintentos; "
+                     "se puede reprocesar. RECHAZADO: el mensaje esta mal "
+                     "formado; hay que corregirlo en la sede."),
+        }
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=503)
     finally:
