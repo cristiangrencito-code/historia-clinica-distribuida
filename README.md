@@ -103,6 +103,26 @@ filtra sola.
 
 ## Demostraciones
 
+### RF2 — Pruebas unitarias del normalizador
+
+```bash
+python3 tests/prueba-normalizador.py
+```
+
+43 comprobaciones, doce de ellas sobre entradas inválidas. No hace falta
+levantar nada: importa `hsb/normalizador.py` y `hsb/parsers.py` directamente,
+así que corre en menos de un segundo y sirve después de cada cambio.
+
+### Todos los requisitos — Colección de peticiones
+
+```bash
+bash tests/coleccion-curl.sh        # la colección entera
+bash tests/coleccion-curl.sh 7      # solo el bloque 7 (roles)
+```
+
+Nueve bloques numerados, uno por grupo de requisitos. Cada petición muestra el
+comando antes de ejecutarlo, para poder copiarla por separado.
+
 ### RF1 — Tres sedes, tres formatos
 
 ```bash
@@ -237,5 +257,6 @@ infra/
   semilla-nodo*.sql     Datos sintéticos
   cargar-canal-mirth.sh Despliegue automático del canal
 tests/                  Pruebas y mensajes de ejemplo
+docs/presentacion/      Guion de sustentación y presentación de apoyo
 docs/evidencias/        Salidas de las pruebas
 ```

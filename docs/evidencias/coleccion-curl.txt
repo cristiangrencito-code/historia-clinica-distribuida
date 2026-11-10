@@ -1,0 +1,238 @@
+
+=== 1. SALUD Y METRICAS DE CADA SERVICIO  (RNF3) ===
+
+1.1  Salud del bus
+$ curl -s http://localhost:8002/health
+{"servicio":"hsb","estado":"ok","dependencias":{"bus_db":"ok","hapi":"ok","nodo1":"ok","nodo2":"ok","nodo3":"ok"},"aviso_seguridad":"JWT_SECRETO no configurado: se esta usando el secreto de desarrollo"}
+
+1.2  Salud de la API y el portal
+$ curl -s http://localhost:8001/health
+{"servicio":"app","estado":"ok","dependencias":{"nodo1":"up","nodo2":"up","nodo3":"up","hsb":"ok"},"aviso_seguridad":"JWT_SECRETO no configurado: se esta usando el secreto de desarrollo","nodos_arriba":"3 de 3"}
+
+1.3  Metricas del bus: mensajes por minuto, latencia, fallidos
+$ curl -s http://localhost:8002/metrics
+# HELP hsb_mensajes_total Mensajes recibidos por el bus
+hsb_mensajes_total 6
+hsb_mensajes_entregados 4
+hsb_mensajes_rechazados 2
+hsb_mensajes_muertos 0
+hsb_mensajes_en_reintento 0
+hsb_mensajes_con_reintentos 0
+# HELP hsb_latencia_media_ms Latencia media de extremo a extremo
+hsb_latencia_media_ms 270.22
+# HELP hsb_porcentaje_fallidos Porcentaje de mensajes fallidos
+hsb_porcentaje_fallidos 33.33
+# HELP hsb_mensajes_por_minuto Mensajes del ultimo minuto
+hsb_mensajes_por_minuto 0
+
+
+=== 2. PRIMERAS INTERACCIONES CON FHIR  (Lab FHIR) ===
+
+2.1  metadata: que sabe hacer este servidor FHIR
+$ curl -s http://localhost:8080/fhir/metadata?_summary=true
+{
+  "resourceType": "CapabilityStatement",
+  "id": "fd0604bb-6460-40b6-8e62-81c378f932b9",
+  "meta": {
+    "tag": [ {
+      "system": "http://terminology.hl7.org/CodeSystem/v3-ObservationValue",
+      "code": "SUBSETTED",
+      "display": "Resource encoded in summary mode"
+    } ]
+  },
+  "name": "RestServer",
+  "status": "active",
+  "date": "2026-10-02T19:32:18Z",
+  "publisher": "Not provided",
+  "kind": "instance",
+  "software": {
+    "name": "HAPI FHIR Server",
+    "version": "8.12.0"
+  },
+  "implementation": {
+    "description": "HAPI FHIR R4 Server",
+    "url": "http://hapi-fhir:8080/fhir"
+  },
+  "fhirVersion": "4.0.1",
+  "format": [ "application/fhir+xml", "xml", "application/fhir+json", "json", "application/x-turtle", "ttl", "html/json", "html/xml", "html/turtle" ],
+  "patchFormat": [ "application/fhir+json", "application/fhir+xml", "application/json-patch+json", "application/xml-p
+
+2.2  Buscar un Patient por su documento
+$ curl -s http://localhost:8080/fhir/Patient?identifier=urn:co:minsalud:documento|1098765432
+{
+  "resourceType": "Bundle",
+  "id": "8cc8bfd0-af95-4ba6-9007-66686c058500",
+  "meta": {
+    "lastUpdated": "2026-11-10T16:53:54.451+00:00"
+  },
+  "type": "searchset",
+  "total": 1,
+  "link": [ {
+    "relation": "self",
+    "url": "http://localhost:8080/fhir/Patient?identifier=urn%3Aco%3Aminsalud%3Adocumento%7C1098765432"
+  } ],
+  "entry": [ {
+    "fullUrl": "http://localhost:8080/fhir/Patient/1003",
+    "resource": {
+      "resourceType": "Patient",
+      "id": "1003",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2026-11-08T18:54:53.548+00:00",
+        "tag": [ {
+          "system": "urn:red:ips:sede",
+          "code": "IPS SINCELEJO"
+        } ]
+      },
+      "identifier": [ {
+        "system": "urn:co:minsalud:documento",
+        "value": "1098765432"
+      } ],
+      "name": [ {
+        "use": "official",
+        "family": "Perez Gomez",
+        "given": [ "Ma
+
+2.3  Buscar las Observation de ese paciente
+$ curl -s http://localhost:8080/fhir/Observation?subject.identifier=urn:co:minsalud:documento|1098765432
+{
+  "resourceType": "Bundle",
+  "id": "08dc9197-f452-443b-b6dc-fa7d15f0c02c",
+  "meta": {
+    "lastUpdated": "2026-11-10T16:53:54.535+00:00"
+  },
+  "type": "searchset",
+  "total": 0,
+  "link": [ {
+    "relation": "self",
+    "url": "http://localhost:8080/fhir/Observation?subject.identifier=urn%3Aco%3Aminsalud%3Adocumento%7C1098765432"
+  } ]
+}
+
+2.4  Buscar las Condition en CIE-10
+$ curl -s http://localhost:8080/fhir/Condition?code=http://hl7.org/fhir/sid/icd-10|E11
+{
+  "resourceType": "Bundle",
+  "id": "46f4eb71-37f8-4bc6-b6c1-b727869a1f2e",
+  "meta": {
+    "lastUpdated": "2026-11-10T16:53:54.566+00:00"
+  },
+  "type": "searchset",
+  "total": 2,
+  "link": [ {
+    "relation": "self",
+    "url": "http://localhost:8080/fhir/Condition?code=http%3A%2F%2Fhl7.org%2Ffhir%2Fsid%2Ficd-10%7CE11"
+  } ],
+  "entry": [ {
+    "fullUrl": "http://localhost:8080/fhir/Condition/1001",
+    "resource": {
+      "resourceType": "Condition",
+      "id": "1001",
+      "meta": {
+        "versionId": "1",
+        "lastUpdated": "2026-11-08T18:54:53.548+00:00",
+        "tag": [ {
+          "system": "urn:red:ips:sede",
+          "code": "IPS SINCELEJO"
+        } ]
+      },
+      "clinicalStatus": {
+        "coding": [ {
+          "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+          "code": "active"
+        } ]
+      },
+      "code": {
+        "coding"
+
+=== 3. INGESTA EN LOS TRES FORMATOS  (RF1, RF2, RF3) ===
+
+3.1  Sede 1 (Sincelejo): HL7 v2 ADT^A01 por HTTP
+     (en la demo real entra por MLLP al puerto 6661, via Mirth)
+{"estado":"DUPLICADO","hash":"d0ef8c4696b55941be580407146398e7acd9f2f31351e808ebca202a9f786238","motivo":"Este mensaje ya fue procesado antes"}
+
+3.2  Sede 2 (Cartagena): CSV
+{"estado":"DUPLICADO","hash":"42c84a3b10945679db1505cb17a7b51ba8bfdac51db230cb941fad5232895622","motivo":"Este mensaje ya fue procesado antes"}
+
+3.3  Sede 3 (Corozal): JSON
+{"estado":"DUPLICADO","hash":"383f72d7a8b5322c16f05f10f4e7b1b7f4bb713e97d03958aae2def87ca81e7a","motivo":"Este mensaje ya fue procesado antes"}
+
+=== 4. IDEMPOTENCIA: el mismo mensaje dos veces  (RF3) ===
+
+4.1  Se reenvia el CSV de la sede 2, identico
+{"estado":"DUPLICADO","hash":"42c84a3b10945679db1505cb17a7b51ba8bfdac51db230cb941fad5232895622","motivo":"Este mensaje ya fue procesado antes"}
+     Se espera estado DUPLICADO. La garantia es una
+     restriccion UNIQUE sobre el hash del contenido.
+
+=== 5. VALIDACION: un mensaje invalido se RECHAZA  (RF3) ===
+
+5.1  CSV al que le faltan columnas
+{"estado":"DUPLICADO","hash":"cf118af203eba2e44c180c00d6bf283027917fd442f3d7f11d649ca9a912a99f","motivo":"Este mensaje ya fue procesado antes"}
+
+5.2  HL7 sin el segmento PID (sin paciente)
+{"estado":"DUPLICADO","hash":"f40a81da0cdea943665cbb1b836cae9f43eaefe1f3d8acaaf61857ecd75bbfa1","motivo":"Este mensaje ya fue procesado antes"}
+
+=== 6. LA COLA Y LA COLA DE MENSAJES MUERTOS  (RF3) ===
+
+6.1  Estado de la cola
+$ curl -s http://localhost:8002/cola?limite=10
+{"mensajes":[{"hash_mensaje":"f40a81da0cde","sede":"IPS SINCELEJO","formato":"HL7","estado":"RECHAZADO","intentos":0,"documento_id":null,"error_detalle":"El mensaje no trae segmento PID con documento","recibido_en":"2026-11-10 16:50:48.792523","entregado_en":null},{"hash_mensaje":"cf118af203eb","sede":"IPS CARTAGENA","formato":"CSV","estado":"RECHAZADO","intentos":0,"documento_id":null,"error_detalle":"La linea CSV tiene 2 columnas y se esperaban 12","recibido_en":"2026-11-10 16:50:48.743744","entregado_en":null},{"hash_mensaje":"d0ef8c4696b5","sede":"IPS SINCELEJO","formato":"HL7","estado":"ENTREGADO","intentos":0,"documento_id":1098765432,"error_detalle":null,"recibido_en":"2026-11-10 16:50:48.328637","entregado_en":"2026-11-10 16:50:48.630662"},{"hash_mensaje":"383f72d7a8b5","sede":"IPS COROZAL","formato":"JSON","estado":"ENTREGADO","intentos":0,"documento_id":7123456789,"error_detall
+
+6.2  Mensajes muertos (DLQ)
+$ curl -s http://localhost:8002/dlq
+{"mensajes_muertos":[],"mensajes_rechazados":[{"hash_mensaje":"f40a81da0cde","sede":"IPS SINCELEJO","formato":"HL7","estado":"RECHAZADO","intentos":0,"error_detalle":"El mensaje no trae segmento PID con documento","recibido_en":"2026-11-10 16:50:48.792523"},{"hash_mensaje":"cf118af203eb","sede":"IPS CARTAGENA","formato":"CSV","estado":"RECHAZADO","intentos":0,"error_detalle":"La linea CSV tiene 2 columnas y se esperaban 12","recibido_en":"2026-11-10 16:50:48.743744"}],"nota":"MUERTO: el destino fallo y se agotaron los reintentos; se puede reprocesar. RECHAZADO: el mensaje esta mal formado; hay que corregirlo en la sede."}
+     Para reprocesar uno:  curl -X POST http://localhost:8002/reprocesar/<hash>
+
+=== 7. AUTENTICACION Y ROLES  (RF5) ===
+
+7.1  Inicio de sesion del medico
+     token recibido: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...
+
+7.2  Inicio de sesion del paciente
+     token recibido: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...
+
+7.3  PERMITIDO: la paciente consulta SU PROPIA historia
+     HTTP 200
+
+7.4  DENEGADO: la misma paciente pide la historia de OTRO
+{"error":"no autorizado","motivo":"solo puede consultar su propia historia"}
+     Se espera 403. El documento va firmado dentro del token,
+     asi que no basta con cambiar el numero de la direccion.
+
+7.5  DENEGADO: sin token
+     HTTP 401
+
+7.6  DENEGADO: token manipulado (se le cambia la firma)
+     HTTP 401
+
+=== 8. CONSULTA UNIFICADA EN LAS TRES SEDES  (RF4) ===
+
+8.1  Historia clinica unificada de un paciente
+$ curl -s http://localhost:8001/api/portal/hc/1098765432 -H Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiZHJjYXJsb3MiLCJyb2wiOiJtZWRpY28iLCJkb2N1bWVudG9faWQiOm51bGwsImlhdCI6MTc5NDMyOTYzNSwiZXhwIjoxNzk0MzMzMjM1fQ.9rRpZV0apnqQ0588ZhopquA5qzejKqtYH3cjUmOMMUM
+{"documento_id":1098765432,"nodos_estado":[{"nodo":"nodo1","estado":"UP","error":null},{"nodo":"nodo2","estado":"UP","error":null},{"nodo":"nodo3","estado":"UP","error":null}],"paciente":{"documento_id":1098765432,"tipo_documento":"CC","nombre_completo":"MARIA PEREZ GOMEZ","fecha_nacimiento":"1985-07-22","edad":41,"sexo":"F","genero":"FEMENINO","ocupacion":"Docente","municipio_residencia":"Sincelejo","zona_residencia":"URBANA","fhir_patient_id":"1003"},"atenciones":[{"atencion_id":1,"entidad_salud":"IPS SINCELEJO","fecha_ingreso":"2026-03-10T09:30:00","entorno_atencion":"URGENCIAS","via_ingreso":"URGENCIAS","causa_atencion":"Poliuria y perdida de peso de 2 semanas","clasificacion_triage":"2","tipo_diagnostico_ingreso":"IMPRESION DIAGNOSTICA","diagnostico_ingreso":"E11 - Diabetes mellitus tipo 2","tipo_diagnostico_egreso":"CONFIRMADO NUEVO","diagnostico_egreso":"E11 - Diabetes mellitus ti
+     El campo 'completo' dice si respondieron los tres nodos.
+
+8.2  Tablero de cobertura FHIR por sede
+$ curl -s http://localhost:8001/api/portal/cobertura -H Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiZHJjYXJsb3MiLCJyb2wiOiJtZWRpY28iLCJkb2N1bWVudG9faWQiOm51bGwsImlhdCI6MTc5NDMyOTYzNSwiZXhwIjoxNzk0MzMzMjM1fQ.9rRpZV0apnqQ0588ZhopquA5qzejKqtYH3cjUmOMMUM
+{"cobertura_global":{"pacientes":7,"con_fhir":3,"sin_fhir":4,"porcentaje":42.86},"por_nodo":[{"nodo":"nodo1","pacientes":3,"con_fhir":1,"porcentaje":33.33},{"nodo":"nodo2","pacientes":2,"con_fhir":1,"porcentaje":50.0},{"nodo":"nodo3","pacientes":2,"con_fhir":1,"porcentaje":50.0}],"por_sede":[{"sede":"IPS CARTAGENA","pacientes":4,"con_fhir":3,"atenciones":4,"porcentaje":75.0},{"sede":"IPS COROZAL","pacientes":3,"con_fhir":2,"atenciones":3,"porcentaje":66.67},{"sede":"IPS SINCELEJO","pacientes":4,"con_fhir":2,"atenciones":4,"porcentaje":50.0}],"nodos_estado":[{"nodo":"nodo1","estado":"UP","error":null},{"nodo":"nodo2","estado":"UP","error":null},{"nodo":"nodo3","estado":"UP","error":null}],"metricas_bus":{"hsb_mensajes_total":"6","hsb_mensajes_entregados":"4","hsb_mensajes_rechazados":"2","hsb_mensajes_muertos":"0","hsb_mensajes_en_reintento":"0","hsb_mensajes_con_reintentos":"0","hsb_late
+
+=== 9. BITACORA ENCADENADA POR HASH  (RF5) ===
+
+9.1  Ultimos eventos de la bitacora
+$ curl -s http://localhost:8002/auditoria?limite=5 -H Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiYXVkaXRvcjEiLCJyb2wiOiJhdWRpdG9yIiwiZG9jdW1lbnRvX2lkIjpudWxsLCJpYXQiOjE3OTQzMjk2MzYsImV4cCI6MTc5NDMzMzIzNn0.9UkkHoNb7bsZZYigUHgfspIT6Veg4GL72UU17h-nFKw
+{"eventos":[{"secuencia":86,"ts":"2026-11-10 16:53:56.095540","usuario":"auditor1","rol":"auditor","accion":"LOGIN","recurso":"Sesion","documento_id":null,"resultado":"PERMITIDO","detalle":"token emitido","hash_actual":"48de8e0f3535"},{"secuencia":85,"ts":"2026-11-10 16:53:55.938419","usuario":"drcarlos","rol":"medico","accion":"VER_COBERTURA","recurso":"Tablero","documento_id":null,"resultado":"PERMITIDO","detalle":"cobertura global 42.86%","hash_actual":"39234253e422"},{"secuencia":84,"ts":"2026-11-10 16:53:55.781020","usuario":"drcarlos","rol":"medico","accion":"VER_HC","recurso":"HistoriaClinica","documento_id":1098765432,"resultado":"PERMITIDO","detalle":"3 atenciones en 3 sede(s)","hash_actual":"f4c40e9daebf"},{"secuencia":83,"ts":"2026-11-10 16:53:55.577394","usuario":"drcarlos","rol":"medico","accion":"LOGIN","recurso":"Sesion","documento_id":null,"resultado":"PERMITIDO","detalle
+
+9.2  Verificar la integridad de toda la cadena
+$ curl -s http://localhost:8002/auditoria/verificar -H Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoiYXVkaXRvcjEiLCJyb2wiOiJhdWRpdG9yIiwiZG9jdW1lbnRvX2lkIjpudWxsLCJpYXQiOjE3OTQzMjk2MzYsImV4cCI6MTc5NDMzMzIzNn0.9UkkHoNb7bsZZYigUHgfspIT6Veg4GL72UU17h-nFKw
+{"integra":true,"eventos_revisados":86,"problemas_encontrados":0,"problemas":[],"veredicto":"La bitacora esta intacta"}
+     Para la prueba de alteracion:  python3 tests/verificar-auditoria.py
+
+============================================================
+ Fin de la coleccion.
+ Pruebas relacionadas:
+   python3 tests/prueba-normalizador.py   unidad, sin red
+   python3 tests/prueba-roles.py          permisos por rol
+   python3 tests/prueba-vistas.py         las cuatro vistas
+   python3 tests/prueba-degradacion.py    caida de una sede
+   python3 tests/verificar-auditoria.py   alteracion detectada
+============================================================
