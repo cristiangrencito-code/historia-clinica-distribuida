@@ -1,0 +1,52 @@
+============================================================
+ MENSAJES DE EJEMPLO POR FORMATO   (entregable de Fase 3)
+============================================================
+ El enunciado pide 'tres mensajes de ejemplo por formato
+ (valido, invalido y duplicado)': 3 formatos x 3 = 9 archivos.
+
+ Ejecutado sobre un sistema recien levantado con
+ docker compose down -v && docker compose up -d
+============================================================
+
+------------------------------------------------------------
+ 1. VALIDOS  ->  se esperan ENTREGADO
+------------------------------------------------------------
+HL7 v2  tests/mensaje-adt.hl7      : {"estado":"ENTREGADO","documento":"98765","sede":"IPS SINCELEJO","hash":"ac011c9556114891817a90e8d01c2cf5e1d480d8ac4a6253d30bb693d27af9d2"}
+CSV     tests/sede2-admision.csv   : {"estado":"ENTREGADO","documento":"4123456789","sede":"IPS CARTAGENA","hash":"42c84a3b10945679db1505cb17a7b51ba8bfdac51db230cb941fad5232895622"}
+JSON    tests/sede3-admision.json  : {"estado":"ENTREGADO","documento":"7123456789","sede":"IPS COROZAL","hash":"383f72d7a8b5322c16f05f10f4e7b1b7f4bb713e97d03958aae2def87ca81e7a"}
+
+------------------------------------------------------------
+ 2. INVALIDOS  ->  se esperan RECHAZADO, con motivo legible
+------------------------------------------------------------
+El enunciado marca como error frecuente 'transformar sin
+validar'. Un mensaje malo se rechaza con su motivo y queda
+registrado; no se pierde ni se cuela a medias.
+
+HL7 sin segmento PID               : {"estado":"RECHAZADO","motivo":"El mensaje no trae segmento PID con documento","hash":"fb60b6dbfcb667c0531a493f4565d4b9f63c7f67701f97806c89ea333eac7b7a"}
+CSV con 3 columnas de las 12       : {"estado":"RECHAZADO","motivo":"La linea CSV tiene 3 columnas y se esperaban 12","hash":"6e6799d101c2c4fa7573a5855629f17bedea00815ce0c97cbf6b19bae0e5a139"}
+JSON sin el campo documento        : {"estado":"RECHAZADO","motivo":"Falta el documento del paciente (campo 'documento')","hash":"39ef2eee22586d80e92e1505b305472b45f017900804d695f4e35997dd780714"}
+
+------------------------------------------------------------
+ 3. DUPLICADOS  ->  se esperan DUPLICADO, con el MISMO hash
+------------------------------------------------------------
+Son copias exactas de los validos. El hash SHA-256 es del
+CONTENIDO, asi que coincide, y la restriccion UNIQUE de la
+base impide la segunda insercion.
+
+HL7 duplicado                      : {"estado":"DUPLICADO","hash":"ac011c9556114891817a90e8d01c2cf5e1d480d8ac4a6253d30bb693d27af9d2","motivo":"Este mensaje ya fue procesado antes"}
+CSV duplicado                      : {"estado":"DUPLICADO","hash":"42c84a3b10945679db1505cb17a7b51ba8bfdac51db230cb941fad5232895622","motivo":"Este mensaje ya fue procesado antes"}
+JSON duplicado                     : {"estado":"DUPLICADO","hash":"383f72d7a8b5322c16f05f10f4e7b1b7f4bb713e97d03958aae2def87ca81e7a","motivo":"Este mensaje ya fue procesado antes"}
+
+------------------------------------------------------------
+ 4. ESTADO FINAL DE LA COLA
+------------------------------------------------------------
+  39ef2eee2258   IPS COROZAL      JSON  RECHAZADO   Falta el documento del paciente (campo 'documento')
+  6e6799d101c2   IPS CARTAGENA    CSV   RECHAZADO   La linea CSV tiene 3 columnas y se esperaban 12
+  fb60b6dbfcb6   IPS SINCELEJO    HL7   RECHAZADO   El mensaje no trae segmento PID con documento
+  383f72d7a8b5   IPS COROZAL      JSON  ENTREGADO   
+  42c84a3b1094   IPS CARTAGENA    CSV   ENTREGADO   
+  ac011c955611   IPS SINCELEJO    HL7   ENTREGADO   
+
+  Seis mensajes distintos: 3 entregados y 3 rechazados.
+  Los duplicados NO crearon filas nuevas: esa es la prueba
+  de que la idempotencia funciona.
