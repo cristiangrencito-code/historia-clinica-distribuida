@@ -33,11 +33,33 @@ def solo_digitos(texto):
     return True
 
 
+# Dias de cada mes, de enero a diciembre. Febrero se corrige
+# aparte cuando el ano es bisiesto.
+DIAS_POR_MES = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+
+def es_bisiesto(anio):
+    """
+    Regla del calendario gregoriano: bisiesto cada 4 anos, salvo
+    los multiplos de 100, salvo los multiplos de 400. Por eso 1900
+    no fue bisiesto y 2000 si.
+    """
+    if anio % 4 != 0:
+        return False
+    if anio % 100 != 0:
+        return True
+    return anio % 400 == 0
+
+
 def fecha_valida(anio, mes, dia):
     """
-    Valida que la fecha tenga sentido como calendario.
-    No comprueba anos bisiestos: alcanza para rechazar un mes 13
-    o un dia 45, que es lo que de verdad llega mal de los legados.
+    Valida que la fecha exista de verdad en el calendario.
+
+    Comprueba los dias que tiene cada mes, no solo que el dia este
+    entre 1 y 31. La diferencia importa: una version anterior daba
+    por buena una fecha de nacimiento del 31 de febrero, y una
+    fecha imposible en una historia clinica es un dato falso que
+    ya nadie vuelve a mirar.
     """
     if not solo_digitos(anio) or not solo_digitos(mes) or not solo_digitos(dia):
         return False
@@ -48,7 +70,11 @@ def fecha_valida(anio, mes, dia):
         return False
     if m < 1 or m > 12:
         return False
-    if d < 1 or d > 31:
+
+    tope = DIAS_POR_MES[m - 1]
+    if m == 2 and es_bisiesto(a):
+        tope = 29
+    if d < 1 or d > tope:
         return False
     return True
 

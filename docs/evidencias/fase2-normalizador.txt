@@ -1,0 +1,77 @@
+==================================================================
+ PRUEBAS UNITARIAS DEL NORMALIZADOR
+==================================================================
+
+--- 1. normalizar_fecha: los tres formatos de las tres sedes ---
+
+  ok    sede 1, estilo HL7 '19850722'
+  ok    sede 2, local '22/07/1985'
+  ok    sede 3, ya en ISO '1985-07-22'
+
+--- 2. normalizar_fecha: casos INVALIDOS (no se inventa una fecha) ---
+
+  ok    INVALIDO: 31 de febrero
+  ok    INVALIDO: 30 de febrero en ano bisiesto
+  ok    VALIDO: 29 de febrero de 2024 (bisiesto) si existe
+  ok    INVALIDO: 29 de febrero de 2023 (no bisiesto)
+  ok    INVALIDO: 31 de abril
+  ok    INVALIDO: mes 13
+  ok    INVALIDO: texto que no es fecha
+  ok    INVALIDO: cadena vacia
+  ok    INVALIDO: ausente
+
+--- 3. normalizar_fecha_hora ---
+
+  ok    HL7 '20261012091500'
+  ok    REGRESION: ISO sin segundos '2026-10-12 09:15'
+  ok    ISO con T y sin segundos '2026-10-12T09:15'
+  ok    INVALIDO: fecha y hora ilegibles
+
+--- 4. normalizar_genero ---
+
+  ok    'M' -> male
+  ok    'FEMENINO' -> female
+  ok    desconocido -> unknown
+
+--- 5. separar_nombre ---
+
+  ok    'LAURA MEJIA ORTIZ'
+  ok    LIMITACION conocida: nombre compuesto
+
+--- 6. normalizar_clase_encuentro ---
+
+  ok    'URGENCIAS' -> EMER
+  ok    'CONSULTA EXTERNA' -> AMB
+
+--- 7. parsear_hl7 / parsear_csv / parsear_json ---
+
+  ok    HL7: documento
+  ok    HL7: apellidos
+  ok    HL7: tipo de mensaje
+  ok    HL7: el mensaje es valido
+  ok    CSV: documento
+  ok    CSV: nombre separado
+  ok    CSV: triage convertido a entero
+  ok    JSON: documento
+  ok    JSON: el mensaje es valido
+
+--- 8. Los analizadores ante mensajes INVALIDOS ---
+
+  ok    INVALIDO: HL7 vacio no es valido
+  ok    INVALIDO: HL7 vacio da un motivo
+  ok    INVALIDO: CSV con columnas de menos
+  ok    INVALIDO: JSON mal formado
+
+--- 9. construir_bundle: el resultado es FHIR R4 valido ---
+
+  ok    el Bundle es JSON bien formado
+  ok    resourceType = Bundle
+  ok    type = transaction
+  ok    lleva los cuatro recursos
+  ok    Patient se crea con ifNoneExist (idempotencia)
+  ok    el diagnostico va en CIE-10
+  ok    el laboratorio va en LOINC
+
+==================================================================
+ 43 pruebas pasadas, 0 fallos
+==================================================================
