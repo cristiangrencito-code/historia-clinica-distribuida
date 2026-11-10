@@ -19,7 +19,7 @@ CONTENIDO = {}
 CONTENIDO[0] = [(CENTRADO, "**Plataforma de interoperabilidad en salud: bus HL7 v2 a FHIR R4 sobre una base distribuida**")]
 CONTENIDO[1] = [(CENTRADO, "Autores: [APELLIDOS], Cristian")]
 CONTENIDO[2] = [(CENTRADO, "Sincelejo, Colombia")]
-CONTENIDO[3] = [(CENTRADO, "grencitoop7@gmail.com")]
+CONTENIDO[3] = [(CENTRADO, "cristian.grencito@gmail.com")]
 
 # ------------------------------------------------------------
 #  RESUMEN
