@@ -1,6 +1,9 @@
 # Guion de sustentación
 
-15 minutos de demostración y 10 de preguntas. Esto es lo que hay que decir,
+**Cristian Gómez · Gerneidis Berrios**
+
+15 minutos de demostración y 10 de preguntas. **La nota de sustentación es
+individual: los dos tienen que poder explicar y modificar cualquier parte.** Esto es lo que hay que decir,
 en qué orden, y qué responder a lo que suelen preguntar.
 
 > **Antes de empezar.** La demostración se hace desde cero, como pide el
@@ -298,7 +301,6 @@ Decirlas antes de que las encuentren:
 
 ## Lo que hay que haber hecho antes de la sustentación
 
-- [ ] Completar `[APELLIDOS]` en la portada del informe.
 - [ ] Crear el repositorio propio y subirlo con la etiqueta `v1.0`.
 - [ ] Probar el arranque desde cero **una vez entera**, cronometrando.
 - [ ] Leer este guion en voz alta una vez.

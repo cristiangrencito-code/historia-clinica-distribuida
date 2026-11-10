@@ -1,6 +1,8 @@
 # Plataforma de Interoperabilidad en Salud
 
 Parcial Final de Sistemas Distribuidos.
+
+**Equipo:** Cristian Gómez · Gerneidis Berrios
 Red hospitalaria con tres sedes — **Sincelejo, Cartagena y Corozal** — que
 envían información clínica en formatos distintos y necesitan una historia
 clínica única.
