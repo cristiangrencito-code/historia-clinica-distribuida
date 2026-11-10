@@ -706,6 +706,295 @@ def diagrama_estados():
 
 
 # ============================================================
+#  5. DIAGRAMA DE ARQUITECTURA
+# ============================================================
+
+def diagrama_arquitectura():
+    """La arquitectura por capas. Cada capa lleva escrito el requisito
+    del enunciado al que responde: el enunciado advierte que un
+    componente que no responde a ningun RF o RNF esta de mas."""
+    A = 1240
+    AL = 1082
+    p = [cabecera(A, AL, "Arquitectura de la plataforma de interoperabilidad",
+                  "Seis capas y cinco servicios transversales. Cada capa "
+                  "indica el requisito del enunciado que la justifica")]
+
+    X1, X2, X3 = 140, 425, 710   # columnas del area principal
+    ANCHO_C = 250
+    DER = 960                    # borde derecho del area principal
+    TX, TA = 975, 241            # columna transversal
+
+    def banda(y, alto, numero, titulo, rf, color):
+        """Etiqueta de capa, en el margen izquierdo."""
+        q = [caja(24, y, 106, alto, "#ffffff", BORDE, 6, 1, "3,3")]
+        q.append(texto(77, y + 20, "CAPA %s" % numero, 9.5, GRIS, "middle",
+                       "650"))
+        q.append(texto(77, y + 38, titulo, 10.5, TINTA, "middle", "600"))
+        q.append(texto(77, y + 57, rf, 10.5, color, "middle", "700"))
+        return "".join(q)
+
+    def flecha(x, y1, y2, color=GRIS, etiqueta=None, punta="punta"):
+        q = [linea(x, y1, x, y2, color, 1.6, None, punta)]
+        if etiqueta is not None:
+            q.append(texto(x + 9, (y1 + y2) / 2.0 + 4, etiqueta, 9.5, color))
+        return "".join(q)
+
+    def partir(t, n):
+        """Parte un parrafo en lineas de como mucho n caracteres."""
+        lineas, actual = [], ""
+        for w in t.split():
+            if actual and len(actual) + len(w) + 1 > n:
+                lineas.append(actual)
+                actual = w
+            else:
+                actual = (actual + " " + w).strip()
+        if actual:
+            lineas.append(actual)
+        return lineas
+
+    # ---------- CAPA 1: sedes legadas ----------
+    p.append(banda(85, 92, "1", "Sedes", "RF1", AZUL))
+    sedes = [
+        (X1, "Sede 1  -  Sincelejo", "Sistema legado propio",
+         "HL7 v2:  ADT^A01  /  ORU^R01"),
+        (X2, "Sede 2  -  Cartagena", "Sistema legado propio",
+         "Archivo CSV de admision"),
+        (X3, "Sede 3  -  Corozal", "Sistema legado propio",
+         "Archivo JSON de admision"),
+    ]
+    for x, titulo, sub, formato in sedes:
+        p.append(caja(x, 85, ANCHO_C, 92, AZUL_SUAVE, AZUL, 6, 1.3))
+        p.append(texto(x + 14, 108, titulo, 12, AZUL, "start", "650"))
+        p.append(texto(x + 14, 127, sub, 10, GRIS))
+        p.append(caja(x + 14, 137, ANCHO_C - 28, 28, "#ffffff", AZUL, 4))
+        p.append(texto(x + 24, 155, formato, 10, TINTA, "start", "600"))
+
+    # ---------- CAPA 2: ingesta ----------
+    p.append(banda(215, 80, "2", "Ingesta", "RF1", AZUL))
+    for x in (X1, X2, X3):
+        p.append(flecha(x + 125, 177, 213, AZUL, None, "puntaAzul"))
+
+    entradas = [
+        (X1, "Mirth Connect 4.5.2", "Escucha MLLP en el puerto 6661",
+         "Responde ACK^AA y reenvia por HTTP"),
+        (X2, "POST /ingesta/csv", "Cabecera X-Sede-Clave o token JWT",
+         "Lote de filas separadas por ;"),
+        (X3, "POST /ingesta/json", "Cabecera X-Sede-Clave o token JWT",
+         "Objeto por atencion"),
+    ]
+    for x, titulo, l1, l2 in entradas:
+        p.append(caja(x, 215, ANCHO_C, 80, "#ffffff", AZUL, 6, 1.3))
+        p.append(texto(x + 14, 238, titulo, 11.5, AZUL, "start", "650"))
+        p.append(texto(x + 14, 257, l1, 9.8, GRIS))
+        p.append(texto(x + 14, 273, l2, 9.8, GRIS))
+
+    # ---------- CAPA 3: el HSB ----------
+    p.append(banda(330, 150, "3", "HSB", "RF3", VERDE))
+    for x in (X1, X2, X3):
+        p.append(flecha(x + 125, 295, 328, VERDE, None, "puntaVerde"))
+
+    p.append(caja(X1, 330, DER - X1, 150, VERDE_SUAVE, VERDE, 8, 1.6))
+    p.append(texto(X1 + 16, 354, "Bus de servicios de salud  -  hsb/bus.py  "
+                                 "(FastAPI, puerto 8002)", 12.5, VERDE,
+                   "start", "650"))
+
+    paso_ancho = 148
+    pasos = [("1. Recepcion", "se guarda crudo"),
+             ("2. Validacion", "obligatorios"),
+             ("3. Transformacion", "Bundle FHIR R4"),
+             ("4. Enrutamiento", "por sede"),
+             ("5. Entrega", "cola + reintentos")]
+    for i, (titulo, sub) in enumerate(pasos):
+        x = X1 + i * (paso_ancho + 20)
+        p.append(caja(x, 368, paso_ancho, 46, "#ffffff", VERDE, 5))
+        p.append(texto(x + paso_ancho / 2.0, 387, titulo, 10.2, TINTA,
+                       "middle", "650"))
+        p.append(texto(x + paso_ancho / 2.0, 403, sub, 9.3, GRIS, "middle"))
+        if i < 4:
+            p.append(linea(x + paso_ancho, 391, x + paso_ancho + 18, 391,
+                           VERDE, 1.4, None, "puntaVerde"))
+
+    p.append(caja(X1 + 16, 426, DER - X1 - 32, 42, "#ffffff", VERDE, 5))
+    p.append(texto(X1 + 28, 444, "Idempotencia:  hash SHA-256 del contenido "
+                                 "declarado UNIQUE en la base  -  "
+                                 "ON CONFLICT DO NOTHING", 9.8, TINTA))
+    p.append(texto(X1 + 28, 460, "Reintentos con retroceso exponencial  -  "
+                                 "cola de mensajes muertos (DLQ) tras 8 "
+                                 "intentos  -  tabla mensaje_bus", 9.8, GRIS))
+
+    # ---------- CAPA 4: almacenamiento ----------
+    p.append(banda(515, 130, "4", "Datos", "RF2 RF4", AMBAR))
+    p.append(flecha(X1 + 125, 480, 513, AMBAR, "Bundle FHIR", "punta"))
+    p.append(flecha(X2 + 250, 480, 513, AMBAR, "filas del modelo local",
+                    "punta"))
+
+    p.append(caja(X1, 515, ANCHO_C, 130, AMBAR_SUAVE, AMBAR, 6, 1.3))
+    p.append(texto(X1 + 14, 538, "HAPI FHIR R4", 12, AMBAR, "start", "650"))
+    p.append(texto(X1 + 14, 556, "Servidor de referencia, puerto 8080", 9.8,
+                   GRIS))
+    for i, r in enumerate(["Patient", "Encounter", "Condition  (CIE-10)",
+                           "Observation  (LOINC)"]):
+        p.append(texto(X1 + 22, 578 + i * 16, "- " + r, 9.8, TINTA))
+    p.append(texto(X1 + 14, 638, "Bundle type=transaction, ifNoneExist", 9.3,
+                   GRIS, "start", "normal", True))
+
+    p.append(caja(X2, 515, DER - X2, 130, AMBAR_SUAVE, AMBAR, 6, 1.3))
+    p.append(texto(X2 + 14, 538, "Base de datos distribuida  -  fragmentacion "
+                                 "horizontal por documento del paciente", 12,
+                   AMBAR, "start", "650"))
+    # Los rangos son los de middleware.insertar_en_nodo_correcto:
+    # si se cambian ahi, hay que cambiarlos aqui.
+    nodos = [("nodo1", "pg_nodo1", "doc < 4.000.000.000"),
+             ("nodo2", "pg_nodo2", "4.000.000.000 - 6.999.999.999"),
+             ("nodo3", "pg_nodo3", "doc >= 7.000.000.000")]
+    nodo_ancho = (DER - X2 - 28 - 20) / 3.0
+    for i, (n, cont, rango) in enumerate(nodos):
+        x = X2 + 14 + i * (nodo_ancho + 10)
+        p.append(caja(x, 552, nodo_ancho, 58, "#ffffff", AMBAR, 5))
+        p.append(texto(x + nodo_ancho / 2.0, 571, n, 10.5, TINTA, "middle",
+                       "650"))
+        p.append(texto(x + nodo_ancho / 2.0, 586, cont, 9.3, GRIS, "middle"))
+        p.append(texto(x + nodo_ancho / 2.0, 601, rango, 8.6, AMBAR, "middle"))
+    p.append(texto(X2 + 14, 626, "PostgreSQL 15. Clave elegida por el patron "
+                                 "de acceso: toda consulta empieza por el "
+                                 "documento.", 9.5, GRIS))
+    p.append(texto(X2 + 14, 639, "mensaje_bus, evento_auditoria y "
+                                 "ref_terminologia NO se fragmentan: no "
+                                 "pertenecen a ningun paciente.", 9.5, GRIS))
+
+    # ---------- CAPA 5: API y middleware ----------
+    p.append(banda(680, 78, "5", "API", "RF4", GRIS))
+    p.append(flecha(X1 + 125, 645, 678, GRIS, None, "punta"))
+    p.append(flecha(X2 + 250, 645, 678, GRIS, None, "punta"))
+
+    p.append(caja(X1, 680, DER - X1, 78, GRIS_SUAVE, GRIS, 6, 1.4))
+    p.append(texto(X1 + 16, 703, "API FastAPI  (app.py + portal.py)  y  "
+                                 "middleware coordinador  (middleware.py)  -  "
+                                 "puerto 8001", 12, TINTA, "start", "650"))
+    p.append(texto(X1 + 16, 722, "Consulta unificada: pregunta a los tres "
+                                 "nodos, une los resultados y devuelve una "
+                                 "sola historia clinica.", 9.8, GRIS))
+    p.append(texto(X1 + 16, 738, "Degradacion parcial (RNF2): si un nodo no "
+                                 "responde, se descarta, la respuesta se "
+                                 "marca como incompleta y se nombra la sede "
+                                 "caida.", 9.8, ROJO))
+
+    # ---------- CAPA 6: vistas ----------
+    p.append(banda(793, 92, "6", "Vistas", "RF6", AZUL))
+    for i in range(4):
+        p.append(flecha(X1 + 95 + i * 210, 758, 791, AZUL, None, "puntaAzul"))
+
+    vistas = [("Paciente", "Solo su propia HC", "El documento sale del token"),
+              ("Admisionista", "Buscar y admitir", "Sin datos clinicos"),
+              ("Medico", "HC completa", "Diagnosticos y labs"),
+              ("Reporte de HC", "Cobertura por sede", "Latencia y fallidos")]
+    for i, (titulo, l1, l2) in enumerate(vistas):
+        x = X1 + i * 210
+        p.append(caja(x, 793, 190, 92, AZUL_SUAVE, AZUL, 6, 1.3))
+        p.append(texto(x + 95, 818, titulo, 11.8, AZUL, "middle", "650"))
+        p.append(texto(x + 95, 840, l1, 9.8, TINTA, "middle"))
+        p.append(texto(x + 95, 857, l2, 9.3, GRIS, "middle"))
+
+    # ---------- TRANSVERSALES ----------
+    p.append(caja(TX, 85, TA, 800, "#ffffff", ROJO, 8, 1.6, "5,4"))
+    p.append(texto(TX + TA / 2.0, 110, "SERVICIOS TRANSVERSALES", 10.5, ROJO,
+                   "middle", "700"))
+    p.append(texto(TX + TA / 2.0, 128, "atraviesan las seis capas", 9.5, GRIS,
+                   "middle", "normal", True))
+
+    def bloque(y, titulo, sub, lineas, relleno, borde, color_titulo):
+        """Cada bloque crece segun el numero de lineas: asi ningun
+        texto se sale de su caja."""
+        alto = 58 + len(lineas) * 12.5 + 6
+        q = [caja(TX + 14, y, TA - 28, alto, relleno, borde, 6)]
+        q.append(texto(TX + 26, y + 22, titulo, 12, color_titulo, "start",
+                       "650"))
+        q.append(texto(TX + 26, y + 39, sub, 9.5, GRIS))
+        for i, l in enumerate(lineas):
+            if l:
+                q.append(texto(TX + 26, y + 58 + i * 12.5, l, 9.3, TINTA))
+        return "".join(q), alto
+
+    transversales = [
+        ("Seguridad", "RF5  -  seguridad.py",
+         ["Token JWT firmado HMAC-SHA256.",
+          "Claves con PBKDF2, 120.000",
+          "iteraciones y sal por usuario.",
+          "",
+          "Tres niveles de control:",
+          "1. autenticacion  (hay token?)",
+          "2. rol  (el permiso existe?)",
+          "3. pertenencia  (es suyo?)"],
+         ROJO_SUAVE, ROJO, ROJO),
+        ("Bitacora encadenada", "RF5  -  evento_auditoria",
+         ["Cada evento guarda el hash",
+          "del anterior:",
+          "hash = SHA-256(contenido +",
+          "          hash_anterior)",
+          "",
+          "Alterar una fila rompe la",
+          "cadena; el verificador la",
+          "senala."],
+         ROJO_SUAVE, ROJO, ROJO),
+        ("Observabilidad", "RNF3",
+         ["/health  y  /metrics  en cada",
+          "servicio.",
+          "",
+          "El bus mide: mensajes por",
+          "minuto, latencia media y",
+          "porcentaje de fallidos."],
+         GRIS_SUAVE, GRIS, TINTA),
+        ("Despliegue", "RNF1",
+         ["docker compose up levanta",
+          "los siete contenedores, carga",
+          "los datos sinteticos y",
+          "despliega el canal de Mirth."],
+         AZUL_SUAVE, AZUL, AZUL),
+        ("Terminologias", "RF3  -  ref_terminologia",
+         ["20 correspondencias:",
+          "DM2 -> E11,  HTA -> I10  (CIE-10)",
+          "HBA1C -> 4548-4  (LOINC)",
+          "CREATININA -> 2160-0"],
+         AMBAR_SUAVE, AMBAR, AMBAR),
+    ]
+    y = 148
+    for titulo, sub, lineas, relleno, borde, ct in transversales:
+        svg, alto = bloque(y, titulo, sub, lineas, relleno, borde, ct)
+        p.append(svg)
+        y = y + alto + 10
+
+    # ---------- NOTA FINAL ----------
+    p.append(caja(24, 910, A - 48, 152, GRIS_SUAVE, BORDE, 6))
+    p.append(texto(40, 932, "Por que cada pieza esta ahi", 11.5, TINTA,
+                   "start", "650"))
+    notas = [
+        ("Los sistemas legados no se reemplazan.",
+         "Cada sede sigue emitiendo en el formato que ya sabe producir. La "
+         "plataforma traduce; no obliga a nadie a cambiar de sistema."),
+        ("Mirth y un bus propio, no solo uno de los dos.",
+         "Mirth habla MLLP y responde el ACK, que es trabajo de protocolo. El "
+         "bus propio guarda la cola, el hash de idempotencia y la bitacora, "
+         "que es trabajo de estado."),
+        ("El ACK se devuelve antes de hablar con FHIR.",
+         "Si la sede esperara a HAPI, una caida de HAPI detendria la admision "
+         "en las tres sedes. El precio es que el bus se obliga a no perder el "
+         "mensaje: de ahi la cola, los reintentos y la DLQ."),
+        ("Tres nodos y no una sola base.",
+         "Se fragmenta por documento porque toda consulta clinica empieza por "
+         "el documento. Distribuir por una columna que no se consulta "
+         "obligaria a preguntar siempre a los tres nodos."),
+    ]
+    for i, (titulo, cuerpo) in enumerate(notas):
+        x = 40 if i % 2 == 0 else 630
+        y = 958 if i < 2 else 1012
+        p.append(texto(x, y, titulo, 9.8, AZUL, "start", "650"))
+        for j, l in enumerate(partir(cuerpo, 104)[:3]):
+            p.append(texto(x, y + 15 + j * 13, l, 9.3, TINTA))
+
+    guardar("05-arquitectura.svg", p)
+
+
+# ============================================================
 
 if __name__ == "__main__":
     print("Generando diagramas UML en %s" % SALIDA)
@@ -713,4 +1002,5 @@ if __name__ == "__main__":
     diagrama_secuencia()
     diagrama_clases()
     diagrama_estados()
+    diagrama_arquitectura()
     print("listo.")

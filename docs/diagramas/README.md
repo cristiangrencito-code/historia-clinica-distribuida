@@ -1,6 +1,7 @@
-# Diagramas UML
+# Diagramas
 
-Los cuatro diagramas que pide la Fase 1 del parcial.
+Los cuatro diagramas UML que pide la Fase 1 del parcial, mas el
+diagrama de arquitectura que la Fase 1 pide por separado.
 
 Se generan con un script, no con una herramienta de dibujo:
 
@@ -17,8 +18,17 @@ SVG es texto, git enseña qué cambió entre una versión y otra.
 | [`02-secuencia.svg`](02-secuencia.svg) | Un ADT^A01 desde la sede hasta FHIR, con el fragmento `alt` de los dos finales posibles |
 | [`03-clases.svg`](03-clases.svg) | Trece entidades en tres ámbitos: dominio clínico, bus y seguridad |
 | [`04-estados.svg`](04-estados.svg) | Los estados de `mensaje_bus.estado`, que existen de verdad en la base |
+| [`05-arquitectura.svg`](05-arquitectura.svg) | Seis capas y cinco servicios transversales; cada capa indica el RF o RNF que la justifica |
 
 ## Qué defender de cada uno
+
+**Arquitectura.** Cada capa lleva escrito el requisito del enunciado al que
+responde, porque el enunciado avisa de que un componente que no responde a
+ningún RF o RNF está de más. Los rangos de los tres nodos
+(`doc < 4.000.000.000`, hasta `6.999.999.999`, y el resto) son los mismos que
+están en `middleware.insertar_en_nodo_correcto`: si se cambian allí, hay que
+cambiarlos aquí.
+
 
 **Casos de uso.** Los actores están repartidos a los dos lados, cada uno
 junto a su columna, para que ninguna línea de asociación cruce por encima de
