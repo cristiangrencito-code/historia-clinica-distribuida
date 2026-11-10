@@ -1,0 +1,16 @@
+{
+  "documento": "7123456789",
+  "first_name": "JUAN",
+  "last_name": "MARTINEZ CANO",
+  "birth_date": "1975-11-30",
+  "sex": "M",
+  "fecha_atencion": "2026-10-18 14:40",
+  "tipo_atencion": "CONSULTA EXTERNA",
+  "triage": "4",
+  "causa": "Control de hipertension",
+  "dx_codigo": "HTA",
+  "dx_descripcion": "Hipertension esencial",
+  "lab_prueba": "CREATININA",
+  "lab_valor": "0.9",
+  "lab_unidad": "mg/dL"
+}
