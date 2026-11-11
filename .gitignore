@@ -42,3 +42,6 @@ npm-debug.log*
 # Environment variables
 .env
 .env.local
+
+# Apuntes personales de sustentacion, no son un entregable
+docs/presentacion/guion-sustentacion.md
