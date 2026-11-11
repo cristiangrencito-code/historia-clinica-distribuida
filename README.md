@@ -259,6 +259,6 @@ infra/
   semilla-nodo*.sql     Datos sintéticos
   cargar-canal-mirth.sh Despliegue automático del canal
 tests/                  Pruebas y mensajes de ejemplo
-docs/presentacion/      Guion de sustentación y presentación de apoyo
+docs/presentacion/      Presentación de apoyo
 docs/evidencias/        Salidas de las pruebas
 ```
